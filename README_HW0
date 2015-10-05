@@ -1,0 +1,14 @@
+I made this android app a few months back that tracks user's location and notifies people-friends/family.
+
+So it's like you can create a trip, say Stony Brook to NYC, and add bunch of your friends in the 
+list of recipients. So the app will notify your friends when you:
+-leave SBU
+-reach NYC
+
+-leave NYC
+-reach SBU
+
+You can also create up to two checkpoints- say Hunnington.
+So whenever you reach/leave those checkpoints the app is gonna notify your pals.
+
+https://play.google.com/store/apps/details?id=me.sahiljain.tripTracker
