@@ -8,6 +8,8 @@ package nachos.kernel.userprog;
 
 import nachos.Debug;
 import nachos.kernel.Nachos;
+import nachos.kernel.filesys.OpenFile;
+import nachos.machine.CPU;
 import nachos.machine.NachosThread;
 import nachos.machine.Simulation;
 
@@ -60,6 +62,11 @@ public class Syscall {
 
     /** Integer code identifying the "Remove" system call. */
     public static final byte SC_Remove = 11;
+    
+    /**
+     *  Global variable for Process ID
+     */
+    public static int processID=8000;
 
 
     /**
@@ -90,7 +97,48 @@ public class Syscall {
      *
      * @param name The name of the file to execute.
      */
-    public static int exec(String name) {return 0;}
+    public static int exec(String name) {
+	
+	Debug.println('+', "starting Exec from Syscall.java: ");
+	AddrSpace space = ((UserThread)NachosThread.currentThread()).space;
+
+	UserThread t = new UserThread(name, new Runnable() {
+	    
+	    @Override
+	    public void run() {
+		Debug.println('+', "starting run() in exec() method "
+			+ "from Syscall.java: ");
+		
+		//Executing c file here
+		OpenFile executable;
+
+		if((executable = Nachos.fileSystem.open(name)) == null) {
+		    Debug.println('+', "Unable to open executable file: " + name);
+		    Nachos.scheduler.finishThread();
+		    return;
+		}
+
+		AddrSpace space = ((UserThread)NachosThread.currentThread()).space;
+		if(space.exec(executable) == -1) {
+		    Debug.println('+', "Unable to read executable file: " + name);
+		    Nachos.scheduler.finishThread();
+		    return;
+		}
+
+		space.initRegisters();		// set the initial register values
+		space.restoreState();		// load page table register
+
+		CPU.runUserCode();			// jump to the user progam
+		Debug.ASSERT(false);		// machine->Run never returns;
+		// the address space exits
+		// by doing the syscall "exit"
+		Nachos.scheduler.finishThread();
+		
+	    }
+	}, space);
+	Nachos.scheduler.readyToRun(t);	
+	return ++processID;
+	}
 
     /**
      * Wait for the user program specified by "id" to finish, and
@@ -155,6 +203,7 @@ public class Syscall {
     public static void write(byte buffer[], int size, int id) {
 	if (id == ConsoleOutput) {
 	    for(int i = 0; i < size; i++) {
+		System.out.println((char)buffer[i]);
 		Nachos.consoleDriver.putChar((char)buffer[i]);
 	    }
 	}

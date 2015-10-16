@@ -2,3 +2,5 @@
 /ExceptionHandler.class
 /Syscall.class
 /UserThread.class
+/Syscall$1.class
+/.gitignore

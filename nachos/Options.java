@@ -165,7 +165,7 @@ public class Options {
     public boolean SMP_TEST = false;
 
     /** Should we run the user program test? */
-    public boolean PROG_TEST = false;
+    public boolean PROG_TEST = true;
 
     /** Should we run the console test? */
     public boolean CONSOLE_TEST = false;
@@ -180,7 +180,7 @@ public class Options {
     public boolean NETWORK_TEST = false;
 
     /** Should we run the cyclic barrier? */
-    public boolean CYCLIC_BARRIER = true;
+    public boolean CYCLIC_BARRIER = false;
 
     /** Should we run the task manager? */
     public boolean TASK_MANAGER = false;

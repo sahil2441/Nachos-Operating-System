@@ -9,6 +9,7 @@ import nachos.machine.CPU;
 import nachos.machine.MIPS;
 import nachos.machine.Machine;
 import nachos.machine.MachineException;
+import nachos.machine.NachosThread;
 import nachos.kernel.userprog.Syscall;
 
 /**
@@ -50,25 +51,49 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
    * @author Eugene W. Stark (Stony Brook University)
    */
     public void handleException(int which) {
+	int processID;
 	int type = CPU.readRegister(2);
 
 	if (which == MachineException.SyscallException) {
 
+	    //TODO: Process ID
 	    switch (type) {
+	    
 	    case Syscall.SC_Halt:
 		Syscall.halt();
 		break;
+
+	    case Syscall.SC_Fork:
+		Syscall.fork(1);
+	    
+		//TODO
+	    case Syscall.SC_Exec:
+		int startIndex = CPU.readRegister(4);
+		
+		String executableFile=obtainExecutableFileName(startIndex);
+		Syscall.exec("test/"+executableFile);
+		break;
+
+		//TODO
 	    case Syscall.SC_Exit:
 		Syscall.exit(CPU.readRegister(4));
 		break;
-	    case Syscall.SC_Exec:
-		Syscall.exec("");
-		break;
+		
+		//TODO
+	    case Syscall.SC_Join:
+		
+		//TODO
+	    case Syscall.SC_Yield:
+		
+		//TODO
+	    case Syscall.SC_Read:
+		
+		//TODO
 	    case Syscall.SC_Write:
 		int ptr = CPU.readRegister(4);
 		int len = CPU.readRegister(5);
 		byte buf[] = new byte[len];
-
+		
 		System.arraycopy(Machine.mainMemory, ptr, buf, 0, len);
 		Syscall.write(buf, len, CPU.readRegister(6));
 		break;
@@ -90,4 +115,14 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 	Debug.ASSERT(false);
 
     }
+
+private String obtainExecutableFileName(int ptr) {
+    StringBuilder executable=new StringBuilder("");
+    byte buffer[]=Machine.mainMemory;
+    while(buffer[ptr]!=0){
+	executable.append((char)buffer[ptr]);
+	ptr++;
+    }
+    return executable.toString();
+}
 }
