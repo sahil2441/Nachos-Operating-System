@@ -1,5 +1,5 @@
 #include "syscall.h"
-#define STR "Sahil"
+#define STR "Stony Brook"
 
 
 int main()

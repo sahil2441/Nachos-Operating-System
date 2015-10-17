@@ -10,15 +10,14 @@
 
 package nachos.kernel.userprog;
 
+import nachos.machine.CPU;
 import nachos.machine.MIPS;
 import nachos.machine.NachosThread;
-import nachos.machine.CPU;
 
 /**
- * A UserThread is a NachosThread extended with the capability of
- * executing user code.  It is kept separate from AddrSpace to provide
- * for the possibility of having multiple UserThreads running in a
- * single AddrSpace.
+ * A UserThread is a NachosThread extended with the capability of executing user
+ * code. It is kept separate from AddrSpace to provide for the possibility of
+ * having multiple UserThreads running in a single AddrSpace.
  * 
  * @author Thomas Anderson (UC Berkeley), original C++ version
  * @author Peter Druschel (Rice University), Java translation
@@ -29,7 +28,7 @@ public class UserThread extends NachosThread {
     /** The context in which this thread will execute. */
     public final AddrSpace space;
 
-    // A thread running a user program actually has *two* sets of 
+    // A thread running a user program actually has *two* sets of
     // CPU registers -- one for its state while executing user code,
     // and one for its state while executing kernel code.
     // The kernel registers are managed by the super class.
@@ -41,11 +40,14 @@ public class UserThread extends NachosThread {
     /**
      * Initialize a new user thread.
      *
-     * @param name  An arbitrary name, useful for debugging.
-     * @param runObj Execution of the thread will begin with the run()
-     * method of this object.
-     * @param addrSpace  The context to be installed when this thread
-     * is executing in user mode.
+     * @param name
+     *            An arbitrary name, useful for debugging.
+     * @param runObj
+     *            Execution of the thread will begin with the run() method of
+     *            this object.
+     * @param addrSpace
+     *            The context to be installed when this thread is executing in
+     *            user mode.
      */
     public UserThread(String name, Runnable runObj, AddrSpace addrSpace) {
 	super(name, runObj);
@@ -58,7 +60,7 @@ public class UserThread extends NachosThread {
     @Override
     public void saveState() {
 	// Save state associated with the address space.
-	space.saveState();  
+	space.saveState();
 
 	// Save user-level CPU registers.
 	for (int i = 0; i < MIPS.NumTotalRegs; i++)

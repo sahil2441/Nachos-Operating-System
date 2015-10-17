@@ -3,5 +3,5 @@
 
 int main()
 {
-	Exec("name");
+	Exec("university");
 }
