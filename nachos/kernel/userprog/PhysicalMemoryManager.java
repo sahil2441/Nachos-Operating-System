@@ -61,7 +61,7 @@ public class PhysicalMemoryManager {
 
     public int getIndex() {
 	PhysicalMemoryManager.pageLock.acquire();
-	int i = 10;
+	int i = 0;
 	while (physicalMemoryArray[i] && i < Machine.NumPhysPages) {
 	    i++;
 	}

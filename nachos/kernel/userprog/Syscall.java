@@ -140,12 +140,12 @@ public class Syscall {
 		    Nachos.scheduler.finishThread();
 		    return;
 		}
-		Debug.println('+', "Calling sspace.initRegisters(),"
+		Debug.println('+', "Calling space.initRegisters(),"
 			+ " from nachos.kernel.userprog.Syscall.exec(...).new Runnable() {...}.run()");
 
 		space.initRegisters(); // set the initial register values
 
-		Debug.println('+', "Calling sspace.initRegisters(),"
+		Debug.println('+', "Calling space.initRegisters(),"
 			+ " from nachos.kernel.userprog.Syscall.exec(...).new Runnable() {...}.run()");
 
 		space.restoreState(); // load page table register

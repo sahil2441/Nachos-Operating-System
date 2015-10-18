@@ -103,7 +103,7 @@ public class AddrSpace {
 
 	    location = PhysicalMemoryManager.getInstance().getIndex();
 	    checkPhysicalPageAddress(location);
-	    pageTable[i].physicalPage = i;
+	    pageTable[i].physicalPage = location;
 
 	    pageTable[i].valid = true;
 	    pageTable[i].use = false;
@@ -119,34 +119,35 @@ public class AddrSpace {
 	// Added
 	// Machine.mainMemory[i] is an array of bytes of size Machine.MemorySize
 	// which's equal to NumPhysPages * PageSize == 128*128 bytes
-	for (int i = 0; i < size; i++)
+	for (int i = 0; i < size; i++) {
 	    Machine.mainMemory[i] = (byte) 0;
+	}
+
+	// original
+
+	// then, copy in the code and data segments into memory
+	// if (noffH.code.size > 0) {
+	// Debug.println('a', "Initializing code segment, at "
+	// + noffH.code.virtualAddr + ", size " + noffH.code.size);
+	//
+	// executable.seek(noffH.code.inFileAddr);
+	// executable.read(Machine.mainMemory, noffH.code.virtualAddr,
+	// noffH.code.size);
+	// }
+	//
+	// if (noffH.initData.size > 0) {
+	// Debug.println('a',
+	// "Initializing data segment, at "
+	// + noffH.initData.virtualAddr + ", size "
+	// + noffH.initData.size);
+	//
+	// executable.seek(noffH.initData.inFileAddr);
+	// executable.read(Machine.mainMemory, noffH.initData.virtualAddr,
+	// noffH.initData.size);
+	// }
 
 	// then, copy in the code and data segments into memory
 	if (noffH.code.size > 0) {
-	    Debug.println('a', "Initializing code segment, at "
-		    + noffH.code.virtualAddr + ", size " + noffH.code.size);
-
-	    executable.seek(noffH.code.inFileAddr);
-	    executable.read(Machine.mainMemory, noffH.code.virtualAddr,
-		    noffH.code.size);
-	}
-
-	if (noffH.initData.size > 0) {
-	    Debug.println('a',
-		    "Initializing data segment, at "
-			    + noffH.initData.virtualAddr + ", size "
-			    + noffH.initData.size);
-
-	    executable.seek(noffH.initData.inFileAddr);
-	    executable.read(Machine.mainMemory, noffH.initData.virtualAddr,
-		    noffH.initData.size);
-	}
-
-	// then, copy in the code and data segments into memory
-	if (noffH.code.size > 0) {
-	    // Debug.println('a', "Initializing code segment, at "
-	    // + noffH.code.virtualAddr + ", size " + noffH.code.size);
 
 	    // Now since our physical and virtual addresses are not same ,
 	    // therefore we pass into executable.read()
@@ -156,10 +157,15 @@ public class AddrSpace {
 	    // / Machine.PageSize; j++) {
 	    //
 	    // executable.seek(noffH.code.inFileAddr);
-	    // executable.read(Machine.mainMemory,
-	    // pageTable[j].physicalPage * Machine.PageSize,
-	    // Machine.PageSize);
+	    // executable.read(Machine.mainMemory, pageTable[j].physicalPage,
+	    // noffH.code.size);
 	    // }
+
+	    // Approach 2
+	    executable.seek(noffH.code.inFileAddr);
+	    executable.read(Machine.mainMemory, pageTable[0].physicalPage,
+		    noffH.code.size);
+
 	}
 
 	if (noffH.initData.size > 0) {
@@ -180,6 +186,12 @@ public class AddrSpace {
 	    // executable.seek(noffH.initData.inFileAddr);
 	    // executable.read(Machine.mainMemory, noffH.initData.virtualAddr,
 	    // noffH.initData.size);
+
+	    // Approach 2
+	    executable.seek(noffH.initData.inFileAddr);
+	    executable.read(Machine.mainMemory, pageTable[0].physicalPage,
+		    noffH.initData.size);
+
 	}
 
 	return (0);

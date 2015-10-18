@@ -5,7 +5,7 @@
 int main()
 {
 	Exec("name");
-	Exec("university");
+//	Exec("university");
 //	Yield();
 	
 	/* write STR to data file */
