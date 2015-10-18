@@ -1,5 +1,6 @@
 package nachos.kernel.userprog;
 
+import nachos.Debug;
 import nachos.kernel.threads.Lock;
 import nachos.machine.Machine;
 
@@ -73,5 +74,12 @@ public class PhysicalMemoryManager {
 	// no free memory
 	PhysicalMemoryManager.pageLock.release();
 	return -1;
+    }
+
+    public void freeIndex(int index) {
+	Debug.println('+',
+		"Entered method nachos.kernel.userprog.PhysicalMemoryManager.freeIndex(int)"
+			+ ", Freeing memory at index: " + index);
+	physicalMemoryArray[index] = false;
     }
 }

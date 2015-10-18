@@ -49,6 +49,10 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 	int type = CPU.readRegister(2);
 
 	if (which == MachineException.SyscallException) {
+	    Debug.println('+',
+		    "Entered into nachos.kernel.userprog.ExceptionHandler.handleException(int)"
+			    + " with 'which' : " + which + " and 'type: '"
+			    + type);
 
 	    switch (type) {
 
@@ -62,6 +66,7 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		// Syscall.Exec() returns the processID after it completes
 		// the process
 	    case Syscall.SC_Exec:
+		Debug.println('+', "Syscall is : Syscall.SC_Exec");
 		int startIndex = CPU.readRegister(4);
 		String executableFile = obtainExecutableFileName(startIndex);
 
@@ -73,20 +78,22 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 
 	    // TODO
 	    case Syscall.SC_Exit:
+		Debug.println('+', "Syscall is : Syscall.SC_Exit");
 		Syscall.exit(CPU.readRegister(4));
 		break;
 
 	    // TODO
 	    case Syscall.SC_Join:
 
-		// TODO
 	    case Syscall.SC_Yield:
+		Syscall.yield();
+		break;
 
-		// TODO
+	    // TODO
 	    case Syscall.SC_Read:
 
-		// TODO
 	    case Syscall.SC_Write:
+		Debug.println('+', "Syscall is : Syscall.SC_Write");
 		int ptr = CPU.readRegister(4);
 		int len = CPU.readRegister(5);
 		byte buf[] = new byte[len];

@@ -86,8 +86,17 @@ public class Syscall {
      *            means the program exited normally.
      */
     public static void exit(int status) {
-	Debug.println('+', "User program exits with status=" + status + ": "
-		+ NachosThread.currentThread().name);
+	Debug.println('+',
+		"User program exits with status=" + status
+			+ ", Current Thread Name: "
+			+ NachosThread.currentThread().name);
+
+	// free the memory space occupied by this thread
+	AddrSpace space = ((UserThread) NachosThread.currentThread()).space;
+	Debug.println('+',
+		"Calling nachos.kernel.userprog.AddrSpace.freeSpace() from nachos.kernel.userprog.Syscall.exit(int) to free up the memory");
+	space.freeSpace();
+
 	Nachos.scheduler.finishThread();
     }
 
@@ -122,15 +131,27 @@ public class Syscall {
 
 		AddrSpace space = ((UserThread) NachosThread
 			.currentThread()).space;
+		Debug.println('+', "Calling space.exec() with executable file: "
+			+ executable.toString()
+			+ " from nachos.kernel.userprog.Syscall.exec(...).new Runnable() {...}.run()");
 		if (space.exec(executable) == -1) {
 		    Debug.println('+',
 			    "Unable to read executable file: " + name);
 		    Nachos.scheduler.finishThread();
 		    return;
 		}
+		Debug.println('+', "Calling sspace.initRegisters(),"
+			+ " from nachos.kernel.userprog.Syscall.exec(...).new Runnable() {...}.run()");
 
 		space.initRegisters(); // set the initial register values
+
+		Debug.println('+', "Calling sspace.initRegisters(),"
+			+ " from nachos.kernel.userprog.Syscall.exec(...).new Runnable() {...}.run()");
+
 		space.restoreState(); // load page table register
+
+		Debug.println('+',
+			"Now Starting CPU.runUserCode() from: nachos.kernel.userprog.Syscall.exec(...).new Runnable() {...}.run()");
 
 		CPU.runUserCode(); // jump to the user progam
 		Debug.ASSERT(false); // machine->Run never returns;
@@ -274,6 +295,9 @@ public class Syscall {
      * or not.
      */
     public static void yield() {
+	Debug.println('+', "starting Yield() from Syscall.java: ");
+	Nachos.scheduler.yieldThread();
+
     }
 
 }

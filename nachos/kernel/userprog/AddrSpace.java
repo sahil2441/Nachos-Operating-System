@@ -101,7 +101,7 @@ public class AddrSpace {
 	    pageTable[i] = new TranslationEntry();
 	    pageTable[i].virtualPage = i; // for now, virtual page# = phys page#
 
-	    location = getPhysicalPageAddress(i);
+	    location = PhysicalMemoryManager.getInstance().getIndex();
 	    checkPhysicalPageAddress(location);
 	    pageTable[i].physicalPage = i;
 
@@ -115,6 +115,10 @@ public class AddrSpace {
 
 	// Zero out the entire address space, to zero the uninitialized data
 	// segment and the stack segment.
+
+	// Added
+	// Machine.mainMemory[i] is an array of bytes of size Machine.MemorySize
+	// which's equal to NumPhysPages * PageSize == 128*128 bytes
 	for (int i = 0; i < size; i++)
 	    Machine.mainMemory[i] = (byte) 0;
 
@@ -137,6 +141,45 @@ public class AddrSpace {
 	    executable.seek(noffH.initData.inFileAddr);
 	    executable.read(Machine.mainMemory, noffH.initData.virtualAddr,
 		    noffH.initData.size);
+	}
+
+	// then, copy in the code and data segments into memory
+	if (noffH.code.size > 0) {
+	    // Debug.println('a', "Initializing code segment, at "
+	    // + noffH.code.virtualAddr + ", size " + noffH.code.size);
+
+	    // Now since our physical and virtual addresses are not same ,
+	    // therefore we pass into executable.read()
+	    // different arguments as compared to before
+
+	    // for (int j = 0; j < roundToPage(noffH.code.size)
+	    // / Machine.PageSize; j++) {
+	    //
+	    // executable.seek(noffH.code.inFileAddr);
+	    // executable.read(Machine.mainMemory,
+	    // pageTable[j].physicalPage * Machine.PageSize,
+	    // Machine.PageSize);
+	    // }
+	}
+
+	if (noffH.initData.size > 0) {
+	    // Debug.println('a',
+	    // "Initializing data segment, at "
+	    // + noffH.initData.virtualAddr + ", size "
+	    // + noffH.initData.size);
+
+	    // for (int j = 0; j < roundToPage(noffH.code.size)
+	    // / Machine.PageSize; j++) {
+	    //
+	    // executable.seek(noffH.initData.inFileAddr);
+	    // executable.read(Machine.mainMemory,
+	    // pageTable[j].physicalPage * Machine.PageSize,
+	    // Machine.PageSize);
+	    //
+	    // }
+	    // executable.seek(noffH.initData.inFileAddr);
+	    // executable.read(Machine.mainMemory, noffH.initData.virtualAddr,
+	    // noffH.initData.size);
 	}
 
 	return (0);
@@ -243,5 +286,21 @@ public class AddrSpace {
     private long roundToPage(long size) {
 	return (Machine.PageSize
 		* ((size + (Machine.PageSize - 1)) / Machine.PageSize));
+    }
+
+    /**
+     * Method called from Syscall.exit() to free space occupied by a particular
+     * thread. It looks for the physical page number and sets the boolean flag
+     * true at the
+     * nachos.kernel.userprog.PhysicalMemoryManager.physicalMemoryArray making
+     * the space free so that it can be used again by some other address space.
+     */
+
+    public void freeSpace() {
+	Debug.println('+', "Entered freeSpace() method in AddrSpace()");
+	for (int i = 0; i < pageTable.length; i++) {
+	    PhysicalMemoryManager.getInstance()
+		    .freeIndex(pageTable[i].physicalPage);
+	}
     }
 }
