@@ -101,14 +101,10 @@ public class AddrSpace {
 	    pageTable[i] = new TranslationEntry();
 	    pageTable[i].virtualPage = i; // for now, virtual page# = phys page#
 
-	    try {
-		location = getPhysicalPageAddress(i);
-		checkPhysicalPageAddress(location);
-		pageTable[i].physicalPage = i;
+	    location = getPhysicalPageAddress(i);
+	    checkPhysicalPageAddress(location);
+	    pageTable[i].physicalPage = i;
 
-	    } catch (Exception e) {
-		e.printStackTrace();
-	    }
 	    pageTable[i].valid = true;
 	    pageTable[i].use = false;
 	    pageTable[i].dirty = false;

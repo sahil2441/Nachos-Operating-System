@@ -3,5 +3,6 @@
 
 int main()
 {
-	Exec("implementExec");
+	Exec("name");
+	Exec("university");
 }
