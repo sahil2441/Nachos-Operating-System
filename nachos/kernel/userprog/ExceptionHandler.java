@@ -50,7 +50,8 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 	int type = CPU.readRegister(2);
 
 	int virtualAddress, virtualPageNumber, physicalPageAddress,
-		physicalPageNumber;
+		physicalPageNumber, len;
+	byte[] buf;
 
 	if (which == MachineException.SyscallException) {
 	    Debug.println('+',
@@ -101,9 +102,12 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		Debug.println('+', "Syscall is : Syscall.SC_Read");
 		// This is the machine address where we are required to save our
 		// input text that we get from console
-		virtualAddress = CPU.readRegister(4);
+		len = CPU.readRegister(5);
+		buf = new byte[len];
+		// prepare buf array to read from Console and then save it to
+		// Machine.mainMemory
 
-		// Syscall.read(buffer, size, id)
+		Syscall.read(buf, len, CPU.readRegister(6));
 		break;
 
 	    case Syscall.SC_Write:
@@ -119,14 +123,17 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		// finding
 		// next physical page address from virtual page address
 
+		// So in short in write we copy data from machine.mainMemory to
+		// buff array and print this data to console
+
 		Debug.println('+', "Syscall is : Syscall.SC_Write");
 		virtualAddress = CPU.readRegister(4);
 		virtualPageNumber = ((virtualAddress >> 7) & 0x1ffffff);
 		// get virtual page number and offset from virtual address
 		int offset = (virtualAddress & 0x7f);
 
-		int len = CPU.readRegister(5);
-		byte buf[] = new byte[len];
+		len = CPU.readRegister(5);
+		buf = new byte[len];
 
 		// index that ensures that all data has been copied successfully
 		// It must reach len
@@ -143,6 +150,7 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		    while (offset < Machine.PageSize && index < len) {
 			buf[index] = Machine.mainMemory[physicalPageAddress];
 			index++;
+			offset++;
 			physicalPageAddress++;
 		    }
 		    virtualPageNumber++;

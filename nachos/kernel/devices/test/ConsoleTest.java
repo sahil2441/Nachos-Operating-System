@@ -26,42 +26,40 @@ public class ConsoleTest implements Runnable {
     private ConsoleDriver console;
 
     /**
-     * Test the console by echoing characters typed at the input onto
-     * the output.  Stop when the user types a 'q'.
+     * Test the console by echoing characters typed at the input onto the
+     * output. Stop when the user types a 'q'.
      */
     public void run() {
 	Debug.println('+', "ConsoleTest: starting");
 	Debug.ASSERT(Nachos.consoleDriver != null,
-			"There is no console device to test!");
+		"There is no console device to test!");
 
 	console = Nachos.consoleDriver;
 	while (true) {
 	    char ch = console.getChar();
-	    console.putChar(ch);	// echo it!
+	    console.putChar(ch); // echo it!
 
-	    if(ch == '\n')
+	    if (ch == '\n')
 		console.putChar('\r');
 
 	    if (ch == 'q') {
 		Debug.println('+', "ConsoleTest: quitting");
 		console.stop();
-		Nachos.scheduler.finishThread();    // if q, quit
+		Nachos.scheduler.finishThread(); // if q, quit
 	    }
 	}
     }
 
     /**
-     * Entry point for the Console test.  If "-c" is included in the
-     * command-line arguments, then run the console test; otherwise, do
-     * nothing.
+     * Entry point for the Console test. If "-c" is included in the command-line
+     * arguments, then run the console test; otherwise, do nothing.
      *
-     * The console test reads characters from the input and echoes them
-     * onto the output.  The test ends when a 'q' is read.
+     * The console test reads characters from the input and echoes them onto the
+     * output. The test ends when a 'q' is read.
      */
     public static void start() {
-	NachosThread thread = new NachosThread("Console test", new ConsoleTest());
+	NachosThread thread = new NachosThread("Console test",
+		new ConsoleTest());
 	Nachos.scheduler.readyToRun(thread);
     }
 }
-
-

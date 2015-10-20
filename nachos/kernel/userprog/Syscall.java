@@ -8,8 +8,10 @@ package nachos.kernel.userprog;
 
 import nachos.Debug;
 import nachos.kernel.Nachos;
+import nachos.kernel.devices.ConsoleDriver;
 import nachos.kernel.filesys.OpenFile;
 import nachos.machine.CPU;
+import nachos.machine.Machine;
 import nachos.machine.NachosThread;
 import nachos.machine.Simulation;
 
@@ -67,6 +69,9 @@ public class Syscall {
      * Global variable for Process ID
      */
     public static int processID = 8000;
+
+    /** Reference to the console device driver. */
+    private static ConsoleDriver console;
 
     /**
      * Stop Nachos, and print out performance stats.
@@ -265,7 +270,41 @@ public class Syscall {
      * @return The actual number of bytes read.
      */
     public static int read(byte buffer[], int size, int id) {
-	return 0;
+	Debug.println('+',
+		"ConsoleTest: starting. Entered method nachos.kernel.userprog.Syscall.read(byte[], int, int)");
+
+	console = Nachos.consoleDriver;
+	int index = 0;
+	int virtualAddress = CPU.readRegister(4);
+	int virtualPageNumber = ((virtualAddress >> 7) & 0x1ffffff);
+	int offset = (virtualAddress & 0x7f);
+
+	// get virtual page number and offset from virtual address
+	AddrSpace space = ((UserThread) NachosThread.currentThread()).space;
+	int physicalPageNumber = space.pageTable[virtualPageNumber].physicalPage;
+	int physicalPageAddress = ((physicalPageNumber << 7) | offset);
+
+	while (index < size) {
+	    char ch = console.getChar();
+	    console.putChar(ch); // echo it!
+
+	    if (ch == '\n')
+		console.putChar('\r');
+
+	    if (ch == 'q') {
+		// console.stop();
+		break;
+	    }
+	    Machine.mainMemory[physicalPageAddress] = (byte) ch;
+	    physicalPageAddress++;
+	    offset++;
+	    index++;
+	    if (offset > 127) {
+		// need to go to the next page that's free
+		// handling page boundary TODO
+	    }
+	}
+	return index;
     }
 
     /**
