@@ -4,6 +4,9 @@
 						sahjain@cs.stonybrook.edu
 ##################################################################
 
+CHANGES MADE:
+-
+
 The following system calls have been implemented in this assignment-
 -Fork()
 -Join()
@@ -11,6 +14,8 @@ The following system calls have been implemented in this assignment-
 -Read()
 -Write()
 -Yield()
+
+I'll discuss briefly each one of them:
 
 #Exec()
 

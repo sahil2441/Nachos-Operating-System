@@ -116,6 +116,9 @@ public class Syscall {
 	List<AddrSpace> list = ((UserThread) NachosThread
 		.currentThread()).space.addrSpaces;
 
+	Debug.println('+',
+		"Entered into nachos.kernel.userprog.Syscall.exit(int) , Calling semaphore.V() on all associated address spaces.");
+
 	for (int i = 0; i < list.size(); i++) {
 	    list.get(i).semaphore.V();
 	}
@@ -175,14 +178,19 @@ public class Syscall {
 		Debug.println('+',
 			"Now Starting CPU.runUserCode() from: nachos.kernel.userprog.Syscall.exec(...).new Runnable() {...}.run()");
 
-		// jump to the user progam
+		CPU.runUserCode(); // jump to the user progam
 		Debug.ASSERT(false); // machine->Run never returns;
 		// the address space exits
 		// by doing the syscall "exit"
-
 	    }
 	}, space);
 	Nachos.scheduler.readyToRun(t);
+
+	// return spaceID on completion
+	// Before returning save the space id in CPU.writeRegister(2);
+	// CPU.writeRegister(2,
+	// ((UserThread) NachosThread.currentThread()).space.spaceID);
+
 	return ((UserThread) NachosThread.currentThread()).space.spaceID;
     }
 
@@ -197,12 +205,17 @@ public class Syscall {
     public static int join(int id) {
 	Debug.println('+',
 		"Executing nachos.kernel.userprog.Syscall.join(int) ");
+	Debug.println('+', "Process ID recieved in join method: " + id);
 
 	PhysicalMemoryManager.getInstance();
 	// Retrieve the AddrSpace corresponding to the given id. Then in that
 	// AddrSpace
 	// add this address space to the list of Address spaces that is
 	// maintained in the retrieved address space
+
+	Debug.println('+', "Inside: nachos.kernel.userprog.Syscall.join(int), "
+		+ "Adding this instance of address space to the list of address spaces");
+
 	PhysicalMemoryManager.mapOfAddrSpace.get(id).addrSpaces
 		.add(((UserThread) (NachosThread.currentThread())).space);
 
@@ -211,7 +224,7 @@ public class Syscall {
 	((UserThread) (NachosThread.currentThread())).space.semaphore.P();
 
 	Debug.println('+', "Inside: nachos.kernel.userprog.Syscall.join(int), "
-		+ "Call to semaphore.V() made");
+		+ "Parent thread called semaphore.V()");
 	Debug.println('+', "Inside: nachos.kernel.userprog.Syscall.join(int), "
 		+ "Exit status returned is: "
 		+ PhysicalMemoryManager.getInstance().mapExitStatuses.get(id));

@@ -76,8 +76,7 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		Debug.println('+', "Syscall is : Syscall.SC_Exec");
 		int startIndex = CPU.readRegister(4);
 		String executableFile = obtainExecutableFileName(startIndex);
-
-		processID = Syscall.exec(executableFile);
+		processID = Syscall.exec("test/" + executableFile);
 		Debug.println('+', "Proces ID after executing Syscall.Exec(): "
 			+ processID);
 
@@ -89,12 +88,7 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		break;
 
 	    case Syscall.SC_Join:
-		virtualAddress = CPU.readRegister(4);
-
-		physicalPageAddress = getPhysicalPageAddress(virtualAddress);
-
-		pid = (char) Machine.mainMemory[physicalPageAddress];
-
+		pid = CPU.readRegister(4);
 		Debug.println('+', "Syscall is : Syscall.SC_Join");
 		Syscall.join(pid);
 		break;
