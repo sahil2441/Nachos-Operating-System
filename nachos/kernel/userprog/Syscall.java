@@ -292,7 +292,6 @@ public class Syscall {
 		console.putChar('\r');
 
 	    if (ch == 'q') {
-		// console.stop();
 		break;
 	    }
 	    Machine.mainMemory[physicalPageAddress] = (byte) ch;

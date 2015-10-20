@@ -171,12 +171,13 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 	    CPU.writeRegister(MIPS.PCReg, CPU.readRegister(MIPS.NextPCReg));
 	    CPU.writeRegister(MIPS.NextPCReg,
 		    CPU.readRegister(MIPS.NextPCReg) + 4);
+
 	    return;
 	}
 
 	System.out.println(
 		"Unexpected user mode exception " + which + ", " + type);
-	// Debug.ASSERT(false);
+	Debug.ASSERT(false);
 
     }
 

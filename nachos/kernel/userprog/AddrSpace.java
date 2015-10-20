@@ -243,9 +243,20 @@ public class AddrSpace {
 
     public void freeSpace() {
 	Debug.println('+', "Entered freeSpace() method in AddrSpace()");
+	// Free space from Singleton class --
+	// /nachos_bit_bucket/nachos/kernel/userprog/PhysicalMemoryManager.java
 	for (int i = 0; i < pageTable.length; i++) {
 	    PhysicalMemoryManager.getInstance()
 		    .freeIndex(pageTable[i].physicalPage);
+	}
+
+	// free memory from Machine.mainMemory using page tables
+	for (int i = 0; i < pageTable.length; i++) {
+	    for (int offset = 0; offset < Machine.PageSize; offset++) {
+		Machine.mainMemory[pageTable[i].physicalPage * Machine.PageSize
+			+ offset] = (byte) 0;
+
+	    }
 	}
     }
 }
