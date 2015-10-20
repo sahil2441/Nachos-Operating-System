@@ -53,6 +53,10 @@ so that it knows on whom  it should call the semaphore.V() upon.
 Check new data members in this class:
 nachos.kernel.userprog.AddrSpace
 
+To return the correct exit status ive created this map which takes care that we return 
+the correct exit status
+nachos.kernel.userprog.PhysicalMemoryManager.mapExitStatuses
+
 #Yield
 This essentially  finishes off the current thread by calling 
 	Nachos.scheduler.yieldThread();
@@ -60,6 +64,8 @@ This essentially  finishes off the current thread by calling
 #Physical Address mapping
 To ensure that physical address are not same as virtual addresses, Ive created a singleton class
 /nachos_bit_bucket/nachos/kernel/userprog/PhysicalMemoryManager.java
+and this array of booleans keeps a track of all the unused and used memory
+nachos.kernel.userprog.PhysicalMemoryManager.physicalMemoryArray 
 
 
 
