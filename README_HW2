@@ -1,1 +1,76 @@
-Read me file for HW2.
+##################################################################
+						Sahil Jain
+						110281300
+						sahjain@cs.stonybrook.edu
+##################################################################
+
+The following system calls have been implemented in this assignment-
+-Fork()
+-Join()
+-Exec()
+-Read()
+-Write()
+-Yield()
+
+#Exec()
+
+To bootstrap the program enter the following in the run configurations:
+	-ncpu 1 -d m -x test/boot
+where boot.c is a c file to bootstrap our program. 
+
+The boot file contains several calls to our system calls e.g Exec("name"), where name 
+is another c file that gets executed through this system call.
+
+The first line of execution for our system calls starts from run method of ProgTest.java
+that executes CPU.runUserCode(); to run further system calls.
+The call to first system calls comes into ExceptionHandler.java where the pointer of the user program
+contained in our system call is present in CPU.readRegister(4);
+A detailed code with proper documentation explains how name of executable file is obtained.
+Then Syscall.exec(executableFile) takes the executable file as argument and creates a new
+user thread with new address space to run this executable file.
+Syscall.Exec() return a spaceID which is unique to all the processes and is maintained in the 
+Singleton file: nachos.kernel.userprog.PhysicalMemoryManager
+
+#Exit()
+
+The Exit() system call frees the memory before calling 	Nachos.scheduler.finishThread();
+It also ensures that it calls semaphores.V() on all the address spaces to which it called the 
+Join(). A list of Address Spaces has been maintained in a address space for this purpose.
+
+#Read and Write
+
+For Read and write syscalls to be executed perfectly we need a translation of virtual to
+physical space address. This has been documented very well in nachos.kernel.userprog.ExceptionHandler.handleException(int)
+For read syscall, We then need to copy our data into a buffer array from Machine.mainMemory and vice versa for 
+write syscall.
+
+#Join
+To ensure that child process waits for parents a map has been created that maintains the 
+address space for a particular iD. Then we add the current space id into the list of Space ids.
+this has been documented well in nachos.kernel.userprog.Syscall.join(int).
+Basically the parent knows the list of child address spaces associated with it through a list
+so that it knows on whom  it should call the semaphore.V() upon.
+Check new data members in this class:
+nachos.kernel.userprog.AddrSpace
+
+#Yield
+This essentially  finishes off the current thread by calling 
+	Nachos.scheduler.yieldThread();
+
+#Physical Address mapping
+To ensure that physical address are not same as virtual addresses, Ive created a singleton class
+/nachos_bit_bucket/nachos/kernel/userprog/PhysicalMemoryManager.java
+
+
+
+
+
+
+
+
+
+
+
+
+
+

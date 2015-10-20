@@ -175,7 +175,7 @@ public class Syscall {
 		Debug.println('+',
 			"Now Starting CPU.runUserCode() from: nachos.kernel.userprog.Syscall.exec(...).new Runnable() {...}.run()");
 
-		CPU.runUserCode(); // jump to the user progam
+		// jump to the user progam
 		Debug.ASSERT(false); // machine->Run never returns;
 		// the address space exits
 		// by doing the syscall "exit"
@@ -334,8 +334,6 @@ public class Syscall {
 	    offset++;
 	    index++;
 	    if (offset > 127) {
-		// need to go to the next page that's free
-		// handling page boundary TODO
 	    }
 	}
 	return index;

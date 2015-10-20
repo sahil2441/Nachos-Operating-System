@@ -51,6 +51,7 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 
 	int virtualAddress, virtualPageNumber, physicalPageAddress, index,
 		physicalPageNumber, len, pid;
+	AddrSpace space;
 	byte[] buf;
 
 	if (which == MachineException.SyscallException) {
@@ -59,6 +60,7 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 			    + " with 'which' : " + which + " and 'type: '"
 			    + type);
 
+	    int offset;
 	    switch (type) {
 
 	    case Syscall.SC_Halt:
@@ -86,10 +88,13 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		Syscall.exit(CPU.readRegister(4));
 		break;
 
-	    // TODO
 	    case Syscall.SC_Join:
-		pid = CPU.readRegister(4);
-		pid = 8001;
+		virtualAddress = CPU.readRegister(4);
+
+		physicalPageAddress = getPhysicalPageAddress(virtualAddress);
+
+		pid = (char) Machine.mainMemory[physicalPageAddress];
+
 		Debug.println('+', "Syscall is : Syscall.SC_Join");
 		Syscall.join(pid);
 		break;
@@ -130,7 +135,7 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		virtualAddress = CPU.readRegister(4);
 		virtualPageNumber = ((virtualAddress >> 7) & 0x1ffffff);
 		// get virtual page number and offset from virtual address
-		int offset = (virtualAddress & 0x7f);
+		offset = (virtualAddress & 0x7f);
 
 		len = CPU.readRegister(5);
 		buf = new byte[len];
@@ -142,8 +147,7 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		while (index < len) {
 
 		    // get physical page number from virtual page number
-		    AddrSpace space = ((UserThread) NachosThread
-			    .currentThread()).space;
+		    space = ((UserThread) NachosThread.currentThread()).space;
 		    physicalPageNumber = space.pageTable[virtualPageNumber].physicalPage;
 		    physicalPageAddress = ((physicalPageNumber << 7) | offset);
 
@@ -178,6 +182,20 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 	System.out.println(
 		"Unexpected user mode exception " + which + ", " + type);
 	Debug.ASSERT(false);
+
+    }
+
+    private int getPhysicalPageAddress(int virtualAddress) {
+	int virtualPageNumber = ((virtualAddress >> 7) & 0x1ffffff);
+	// get physical page number from virtual page number
+	int offset = (virtualAddress & 0x7f);
+
+	AddrSpace space = ((UserThread) NachosThread.currentThread()).space;
+
+	int physicalPageNumber = space.pageTable[virtualPageNumber].physicalPage;
+	int physicalPageAddress = ((physicalPageNumber << 7) | offset);
+
+	return physicalPageAddress;
 
     }
 

@@ -8,7 +8,6 @@ import nachos.machine.NachosThread;
 public class FindNumbersTask extends Task {
 
     public FindNumbersTask() {
-	// TODO Auto-generated constructor stub
     }
 
     @Override
