@@ -129,7 +129,6 @@ public class AddrSpace {
 	    pageTable[i].virtualPage = i; // for now, virtual page# = phys page#
 
 	    location = PhysicalMemoryManager.getInstance().getIndex();
-	    checkPhysicalPageAddress(location);
 	    pageTable[i].physicalPage = location;
 
 	    pageTable[i].valid = true;

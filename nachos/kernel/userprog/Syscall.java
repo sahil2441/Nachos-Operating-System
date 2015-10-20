@@ -216,8 +216,11 @@ public class Syscall {
 	Debug.println('+', "Inside: nachos.kernel.userprog.Syscall.join(int), "
 		+ "Adding this instance of address space to the list of address spaces");
 
-	PhysicalMemoryManager.mapOfAddrSpace.get(id).addrSpaces
-		.add(((UserThread) (NachosThread.currentThread())).space);
+	if (PhysicalMemoryManager.mapOfAddrSpace != null
+		&& PhysicalMemoryManager.mapOfAddrSpace.get(id) != null) {
+	    PhysicalMemoryManager.mapOfAddrSpace.get(id).addrSpaces
+		    .add(((UserThread) (NachosThread.currentThread())).space);
+	}
 
 	Debug.println('+', "Inside: nachos.kernel.userprog.Syscall.join(int), "
 		+ "Calling semaphore.P() in join method");

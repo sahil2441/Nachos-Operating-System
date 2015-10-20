@@ -4,5 +4,5 @@
 
 int main()
 {
-	Exec("exec1");
+	Exec("join1");
 }
