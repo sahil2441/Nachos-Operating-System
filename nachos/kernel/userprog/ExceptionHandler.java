@@ -80,7 +80,7 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		processID = Syscall.exec("test/" + executableFile);
 		Debug.println('+', "Proces ID after executing Syscall.Exec(): "
 			+ processID);
-
+		CPU.writeRegister(2, processID);
 		break;
 
 	    case Syscall.SC_Exit:
@@ -89,7 +89,7 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		break;
 
 	    case Syscall.SC_Join:
-		pid = CPU.readRegister(10);
+		pid = CPU.readRegister(4);
 		Debug.println('+', "Syscall is : Syscall.SC_Join");
 		Syscall.join(pid);
 		break;

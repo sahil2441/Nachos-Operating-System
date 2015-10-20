@@ -120,6 +120,8 @@ public class Syscall {
 		"Entered into nachos.kernel.userprog.Syscall.exit(int) , Calling semaphore.V() on all associated address spaces.");
 
 	for (int i = 0; i < list.size(); i++) {
+	    Debug.println('+',
+		    "Entered into nachos.kernel.userprog.Syscall.exit(int) , Calling semaphore.V() into the loop");
 	    list.get(i).semaphore.V();
 	}
 	Nachos.scheduler.finishThread();
