@@ -96,7 +96,6 @@ public class Syscall {
 	Debug.println('+',
 		"Calling nachos.kernel.userprog.AddrSpace.freeSpace() from nachos.kernel.userprog.Syscall.exit(int) to free up the memory");
 	space.freeSpace();
-
 	Nachos.scheduler.finishThread();
     }
 
@@ -145,7 +144,7 @@ public class Syscall {
 
 		space.initRegisters(); // set the initial register values
 
-		Debug.println('+', "Calling space.initRegisters(),"
+		Debug.println('+', "Calling space.restoreState(),"
 			+ " from nachos.kernel.userprog.Syscall.exec(...).new Runnable() {...}.run()");
 
 		space.restoreState(); // load page table register
@@ -157,7 +156,6 @@ public class Syscall {
 		Debug.ASSERT(false); // machine->Run never returns;
 		// the address space exits
 		// by doing the syscall "exit"
-		Nachos.scheduler.finishThread();
 
 	    }
 	}, space);
@@ -174,6 +172,10 @@ public class Syscall {
      * @return the exit status of the specified program.
      */
     public static int join(int id) {
+	Debug.println('+',
+		"Executing nachos.kernel.userprog.Syscall.join(int) ");
+
+	// use Semaphores TODO
 	return 0;
     }
 

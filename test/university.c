@@ -1,5 +1,5 @@
 #include "syscall.h"
-#define STR "Stony Brook"
+#define STR "Stony Brook University"
 
 
 int main()

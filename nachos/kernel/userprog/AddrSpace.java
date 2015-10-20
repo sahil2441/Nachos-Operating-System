@@ -46,7 +46,7 @@ import nachos.noff.NoffHeader;
 public class AddrSpace {
 
     /** Page table that describes a virtual-to-physical address mapping. */
-    private TranslationEntry pageTable[];
+    public TranslationEntry pageTable[];
 
     /** Default size of the user stack area -- increase this as necessary! */
     private static final int UserStackSize = 1024;
@@ -94,7 +94,7 @@ public class AddrSpace {
 	Debug.println('a', "Initializing address space, numPages=" + numPages
 		+ ", size=" + size);
 
-	// first, set up the translation TODO
+	// first, set up the translation
 	pageTable = new TranslationEntry[numPages];
 	int location;
 	for (int i = 0; i < numPages; i++) {
@@ -117,34 +117,11 @@ public class AddrSpace {
 	// segment and the stack segment.
 
 	// Added
-	// Machine.mainMemory[i] is an array of bytes of size Machine.MemorySize
-	// which's equal to NumPhysPages * PageSize == 128*128 bytes
-	for (int i = 0; i < size; i++) {
-	    Machine.mainMemory[i] = (byte) 0;
+	// Only free the index at which current physical page is stored
+	for (int i = 0; i < pageTable.length; i++) {
+	    Machine.mainMemory[pageTable[i].physicalPage
+		    * Machine.PageSize] = (byte) 0;
 	}
-
-	// original
-
-	// then, copy in the code and data segments into memory
-	// if (noffH.code.size > 0) {
-	// Debug.println('a', "Initializing code segment, at "
-	// + noffH.code.virtualAddr + ", size " + noffH.code.size);
-	//
-	// executable.seek(noffH.code.inFileAddr);
-	// executable.read(Machine.mainMemory, noffH.code.virtualAddr,
-	// noffH.code.size);
-	// }
-	//
-	// if (noffH.initData.size > 0) {
-	// Debug.println('a',
-	// "Initializing data segment, at "
-	// + noffH.initData.virtualAddr + ", size "
-	// + noffH.initData.size);
-	//
-	// executable.seek(noffH.initData.inFileAddr);
-	// executable.read(Machine.mainMemory, noffH.initData.virtualAddr,
-	// noffH.initData.size);
-	// }
 
 	// then, copy in the code and data segments into memory
 	if (noffH.code.size > 0) {
@@ -153,45 +130,32 @@ public class AddrSpace {
 	    // therefore we pass into executable.read()
 	    // different arguments as compared to before
 
-	    // for (int j = 0; j < roundToPage(noffH.code.size)
-	    // / Machine.PageSize; j++) {
-	    //
-	    // executable.seek(noffH.code.inFileAddr);
-	    // executable.read(Machine.mainMemory, pageTable[j].physicalPage,
-	    // noffH.code.size);
-	    // }
+	    for (int i = 0; i < roundToPage(noffH.code.size)
+		    / Machine.PageSize; i++) {
 
-	    // Approach 2
-	    executable.seek(noffH.code.inFileAddr);
-	    executable.read(Machine.mainMemory, pageTable[0].physicalPage,
-		    noffH.code.size);
-
+		executable.seek(noffH.code.inFileAddr + i * Machine.PageSize);
+		executable.read(Machine.mainMemory,
+			pageTable[i].physicalPage * Machine.PageSize,
+			Machine.PageSize);
+	    }
 	}
 
 	if (noffH.initData.size > 0) {
-	    // Debug.println('a',
-	    // "Initializing data segment, at "
-	    // + noffH.initData.virtualAddr + ", size "
-	    // + noffH.initData.size);
+	    int startIndex = (int) (roundToPage(noffH.code.size)
+		    / Machine.PageSize);
 
-	    // for (int j = 0; j < roundToPage(noffH.code.size)
-	    // / Machine.PageSize; j++) {
-	    //
-	    // executable.seek(noffH.initData.inFileAddr);
-	    // executable.read(Machine.mainMemory,
-	    // pageTable[j].physicalPage * Machine.PageSize,
-	    // Machine.PageSize);
-	    //
-	    // }
-	    // executable.seek(noffH.initData.inFileAddr);
-	    // executable.read(Machine.mainMemory, noffH.initData.virtualAddr,
-	    // noffH.initData.size);
+	    Debug.println('a', "Initializing data segment, at " + startIndex
+		    + ", size " + Machine.PageSize);
 
-	    // Approach 2
-	    executable.seek(noffH.initData.inFileAddr);
-	    executable.read(Machine.mainMemory, pageTable[0].physicalPage,
-		    noffH.initData.size);
+	    for (int j = startIndex; j < roundToPage(noffH.initData.size)
+		    / Machine.PageSize; j++) {
 
+		executable
+			.seek(noffH.initData.inFileAddr + j * Machine.PageSize);
+		executable.read(Machine.mainMemory,
+			pageTable[j].physicalPage * Machine.PageSize,
+			Machine.PageSize);
+	    }
 	}
 
 	return (0);
@@ -210,37 +174,6 @@ public class AddrSpace {
 			    + "program");
 	    Syscall.exit(0);
 	}
-    }
-
-    private int getPhysicalPageAddress(int i) {
-	PhysicalMemoryManager manager = PhysicalMemoryManager.getInstance();
-	int index;
-
-	// if i is the first index (=0) then check whether current index of
-	// mananger
-	// is a power of two. If yes then return the index as it is, else return
-	// the
-	// next greater power of two
-
-	if (i == 0) {
-	    index = (manager.index % 32 == 0 ? manager.index
-		    : getIndex(manager));
-	} else {
-	    index = ++manager.index;
-	}
-	return index;
-    }
-
-    private int getIndex(PhysicalMemoryManager manager) {
-	int index = manager.index;
-	while (!((index % 32) == 0) && !(index > manager.SIZE)) {
-	    index = ++manager.index;
-	}
-
-	if (!(index > manager.SIZE)) {
-	    return index;
-	}
-	return -1;
     }
 
     /**

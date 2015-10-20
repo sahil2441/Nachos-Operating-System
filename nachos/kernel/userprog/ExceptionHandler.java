@@ -9,6 +9,7 @@ import nachos.machine.CPU;
 import nachos.machine.MIPS;
 import nachos.machine.Machine;
 import nachos.machine.MachineException;
+import nachos.machine.NachosThread;
 
 /**
  * An ExceptionHandler object provides an entry point to the operating system
@@ -84,6 +85,10 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 
 	    // TODO
 	    case Syscall.SC_Join:
+		int pid = CPU.readRegister(4);
+		Debug.println('+', "Syscall is : Syscall.SC_Join");
+		Syscall.join(pid);
+		break;
 
 	    case Syscall.SC_Yield:
 		Syscall.yield();
@@ -91,15 +96,58 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 
 	    // TODO
 	    case Syscall.SC_Read:
+		Debug.println('+', "Syscall is : Syscall.SC_Read");
+		break;
 
 	    case Syscall.SC_Write:
+		// First of all we need to get physical page address from
+		// virtual page address and then copy the data from the
+		// machine.mainMemory into buffer array
+		// we will keep copying the data till the index i=0 reaches
+		// i=len-1
+		// reaches. We'll also increment offset value and check if it
+		// reaches
+		// 127 before index i reaches len-1
+		// In that case we need to copy data from next page -- by
+		// finding
+		// next physical page address from virtual page address
+
 		Debug.println('+', "Syscall is : Syscall.SC_Write");
-		int ptr = CPU.readRegister(4);
+		int virtualAddress = CPU.readRegister(4);
+		int virtualPageNumber = ((virtualAddress >> 7) & 0x1ffffff);
+		// get virtual page number and offset from virtual address
+		int offset = (virtualAddress & 0x7f);
+
 		int len = CPU.readRegister(5);
 		byte buf[] = new byte[len];
 
-		System.arraycopy(Machine.mainMemory, ptr, buf, 0, len);
+		// index that ensures that all data has been copied successfully
+		// It must reach len
+		int index = 0;
+
+		while (index < len) {
+
+		    // get physical page number from virtual page number
+		    AddrSpace space = ((UserThread) NachosThread
+			    .currentThread()).space;
+		    int physicalPageNumber = space.pageTable[virtualPageNumber].physicalPage;
+		    int physicalPageAddress = ((physicalPageNumber << 7)
+			    | offset);
+
+		    while (offset < Machine.PageSize && index < len) {
+			buf[index] = Machine.mainMemory[physicalPageAddress];
+			index++;
+			physicalPageAddress++;
+		    }
+		    virtualPageNumber++;
+		    offset = 0;
+		}
+
 		Syscall.write(buf, len, CPU.readRegister(6));
+		break;
+
+	    case Syscall.SC_Remove:
+		Syscall.remove("");
 		break;
 	    }
 
@@ -116,6 +164,17 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		"Unexpected user mode exception " + which + ", " + type);
 	// Debug.ASSERT(false);
 
+    }
+
+    private int obtainPID(int i) {
+	byte buffer[] = Machine.mainMemory;
+	while (i < Machine.mainMemory.length) {
+	    if ((char) buffer[i] > 8000) {
+		return (char) buffer[i];
+	    }
+	    i++;
+	}
+	return i;
     }
 
     private String obtainExecutableFileName(int ptr) {
