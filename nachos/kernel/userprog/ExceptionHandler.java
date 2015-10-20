@@ -75,7 +75,7 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		int startIndex = CPU.readRegister(4);
 		String executableFile = obtainExecutableFileName(startIndex);
 
-		processID = Syscall.exec("test/" + executableFile);
+		processID = Syscall.exec(executableFile);
 		Debug.println('+', "Proces ID after executing Syscall.Exec(): "
 			+ processID);
 
