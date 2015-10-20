@@ -4,8 +4,25 @@
 						sahjain@cs.stonybrook.edu
 ##################################################################
 
-CHANGES MADE:
--
+MAJOR CHANGES MADE:
+	
+	--nachos.kernel.userprog.ExceptionHandler.handleException(int) 
+	modified extensively to handle each system call. Detailed explanation can be found in 
+	 documentation.
+	
+	--nachos.kernel.userprog.AddrSpace.exec(OpenFile) 
+	 also modified and it now ensures that each address space has a unique physical memory 
+	 in the page table which taken care by this Singleton class:
+	 nachos.kernel.userprog.PhysicalMemoryManager
+	 
+	 --nachos.kernel.userprog.PhysicalMemoryManager.physicalMemoryArray
+	  is an array of booleans that keeps a track of which memory block has been ocuupied and 
+	  which one is free.
+	  
+	 --nachos.kernel.userprog.Syscall.exit(int) takes care of the semaphore implemetation
+	   for executing join.
+	 
+DETAILED EXPLANATION:
 
 The following system calls have been implemented in this assignment-
 -Fork()
