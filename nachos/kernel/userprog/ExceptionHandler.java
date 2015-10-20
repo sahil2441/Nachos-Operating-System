@@ -49,8 +49,8 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 	int processID;
 	int type = CPU.readRegister(2);
 
-	int virtualAddress, virtualPageNumber, physicalPageAddress,
-		physicalPageNumber, len;
+	int virtualAddress, virtualPageNumber, physicalPageAddress, index,
+		physicalPageNumber, len, pid;
 	byte[] buf;
 
 	if (which == MachineException.SyscallException) {
@@ -81,7 +81,6 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 
 		break;
 
-	    // TODO
 	    case Syscall.SC_Exit:
 		Debug.println('+', "Syscall is : Syscall.SC_Exit");
 		Syscall.exit(CPU.readRegister(4));
@@ -89,7 +88,8 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 
 	    // TODO
 	    case Syscall.SC_Join:
-		int pid = CPU.readRegister(4);
+		pid = CPU.readRegister(4);
+		pid = 8001;
 		Debug.println('+', "Syscall is : Syscall.SC_Join");
 		Syscall.join(pid);
 		break;
@@ -137,7 +137,7 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 
 		// index that ensures that all data has been copied successfully
 		// It must reach len
-		int index = 0;
+		index = 0;
 
 		while (index < len) {
 

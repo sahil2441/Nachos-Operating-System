@@ -4,11 +4,11 @@
 
 int main()
 {
-	Exec("test/name");	
-	Exec("test/university");
+	int pid=Exec("test/name");	 
+//	Exec("test/university");
 //	Yield();
 
-//	Join(pid);
+	Join(pid);
 	
 	/* write STR to data file */
 //	Write(STR, sizeof(STR)-1,ConsoleOutput);

@@ -1,5 +1,8 @@
 package nachos.kernel.userprog;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import nachos.Debug;
 import nachos.kernel.threads.Lock;
 import nachos.machine.Machine;
@@ -14,9 +17,26 @@ import nachos.machine.Machine;
 public class PhysicalMemoryManager {
 
     /**
-     * 
+     * This lock ensures that only one process can access this singleton class.
      */
     private static Lock pageLock = new Lock("PageLock");
+
+    /**
+     * Space ID used by Address Space object. Each Address space has a unique
+     * space ID.
+     */
+    public static int spaceID = 8000;
+
+    /**
+     * This map maintains a relation between process ID and AddrSpace
+     */
+    public static Map<Integer, AddrSpace> mapOfAddrSpace = new HashMap();
+
+    /**
+     * This map maintains the information about processID that which process has
+     * stopped executing.
+     */
+    public static Map<Integer, Integer> mapExitStatuses = new HashMap();
 
     /**
      * Size of the physical memory is equal to the Number of physical pages in

@@ -19,8 +19,12 @@
 
 package nachos.kernel.userprog;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import nachos.Debug;
 import nachos.kernel.filesys.OpenFile;
+import nachos.kernel.threads.Semaphore;
 import nachos.machine.CPU;
 import nachos.machine.MIPS;
 import nachos.machine.Machine;
@@ -52,9 +56,32 @@ public class AddrSpace {
     private static final int UserStackSize = 1024;
 
     /**
+     * A unique identifier for each address space
+     */
+    public int spaceID;
+
+    /**
+     * Semaphores that are used in join
+     */
+    public static Semaphore semaphore = new Semaphore("Syscall", 0);
+
+    /**
+     * This is the list of AddrSpaces that are associated with a AddrSpaces
+     * Basically these are the ones that are waiting for this thread to finish
+     */
+
+    public List<AddrSpace> addrSpaces = new ArrayList<>();
+
+    /**
      * Create a new address space.
      */
-    public AddrSpace() {
+    public AddrSpace()
+
+    {
+	// allocate a space ID and register in the map
+	spaceID = ++PhysicalMemoryManager.spaceID;
+	PhysicalMemoryManager.mapOfAddrSpace.put(spaceID, this);
+
     }
 
     /**
