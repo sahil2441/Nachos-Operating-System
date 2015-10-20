@@ -186,11 +186,6 @@ public class Syscall {
 	}, space);
 	Nachos.scheduler.readyToRun(t);
 
-	// return spaceID on completion
-	// Before returning save the space id in CPU.writeRegister(2);
-	// CPU.writeRegister(2,
-	// ((UserThread) NachosThread.currentThread()).space.spaceID);
-
 	return ((UserThread) NachosThread.currentThread()).space.spaceID;
     }
 

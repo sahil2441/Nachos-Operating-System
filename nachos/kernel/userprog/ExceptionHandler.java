@@ -5,6 +5,7 @@
 package nachos.kernel.userprog;
 
 import nachos.Debug;
+import nachos.kernel.Nachos;
 import nachos.machine.CPU;
 import nachos.machine.MIPS;
 import nachos.machine.Machine;
@@ -88,7 +89,7 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		break;
 
 	    case Syscall.SC_Join:
-		pid = CPU.readRegister(4);
+		pid = CPU.readRegister(10);
 		Debug.println('+', "Syscall is : Syscall.SC_Join");
 		Syscall.join(pid);
 		break;
@@ -173,9 +174,12 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 	    return;
 	}
 
-	System.out.println(
-		"Unexpected user mode exception " + which + ", " + type);
-	Debug.ASSERT(false);
+	// System.out.println(
+	// "Unexpected user mode exception " + which + ", " + type);
+	// Debug.ASSERT(false);
+
+	// Finish thread here
+	Nachos.scheduler.finishThread();
 
     }
 

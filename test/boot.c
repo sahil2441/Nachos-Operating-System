@@ -4,5 +4,6 @@
 
 int main()
 {
-	Exec("join1");
+	int pid=Exec("name");
+	Join(pid);
 }
