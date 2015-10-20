@@ -4,15 +4,17 @@
 
 int main()
 {
-	Exec("name");
+//	Exec("name");
 //	Write(pid, sizeof(STR)-1,ConsoleOutput);
 	
-	Exec("university");
+//	Exec("university");
 //	Yield();
 
 //	Join(pid);
 	
 	/* write STR to data file */
 //	Write(STR, sizeof(STR)-1,ConsoleOutput);
+
+	Exec("console1");
 
 }

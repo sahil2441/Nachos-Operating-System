@@ -49,6 +49,9 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 	int processID;
 	int type = CPU.readRegister(2);
 
+	int virtualAddress, virtualPageNumber, physicalPageAddress,
+		physicalPageNumber;
+
 	if (which == MachineException.SyscallException) {
 	    Debug.println('+',
 		    "Entered into nachos.kernel.userprog.ExceptionHandler.handleException(int)"
@@ -94,9 +97,13 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		Syscall.yield();
 		break;
 
-	    // TODO
 	    case Syscall.SC_Read:
 		Debug.println('+', "Syscall is : Syscall.SC_Read");
+		// This is the machine address where we are required to save our
+		// input text that we get from console
+		virtualAddress = CPU.readRegister(4);
+
+		// Syscall.read(buffer, size, id)
 		break;
 
 	    case Syscall.SC_Write:
@@ -113,8 +120,8 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		// next physical page address from virtual page address
 
 		Debug.println('+', "Syscall is : Syscall.SC_Write");
-		int virtualAddress = CPU.readRegister(4);
-		int virtualPageNumber = ((virtualAddress >> 7) & 0x1ffffff);
+		virtualAddress = CPU.readRegister(4);
+		virtualPageNumber = ((virtualAddress >> 7) & 0x1ffffff);
 		// get virtual page number and offset from virtual address
 		int offset = (virtualAddress & 0x7f);
 
@@ -130,9 +137,8 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		    // get physical page number from virtual page number
 		    AddrSpace space = ((UserThread) NachosThread
 			    .currentThread()).space;
-		    int physicalPageNumber = space.pageTable[virtualPageNumber].physicalPage;
-		    int physicalPageAddress = ((physicalPageNumber << 7)
-			    | offset);
+		    physicalPageNumber = space.pageTable[virtualPageNumber].physicalPage;
+		    physicalPageAddress = ((physicalPageNumber << 7) | offset);
 
 		    while (offset < Machine.PageSize && index < len) {
 			buf[index] = Machine.mainMemory[physicalPageAddress];
