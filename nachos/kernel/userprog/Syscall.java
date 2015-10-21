@@ -13,6 +13,7 @@ import nachos.kernel.Nachos;
 import nachos.kernel.devices.ConsoleDriver;
 import nachos.kernel.filesys.OpenFile;
 import nachos.machine.CPU;
+import nachos.machine.MIPS;
 import nachos.machine.Machine;
 import nachos.machine.NachosThread;
 import nachos.machine.Simulation;
@@ -374,6 +375,51 @@ public class Syscall {
      *            The user address of the procedure to be run by the new thread.
      */
     public static void fork(int func) {
+	Debug.println('+',
+		"Entered into nachos.kernel.userprog.Syscall.fork(int)");
+
+	// create copy of the address space
+	AddrSpace addrSpace = ((UserThread) NachosThread.currentThread()).space
+		.fork();
+
+	UserThread t = new UserThread("ForkThread", new Runnable() {
+
+	    @Override
+	    public void run() {
+		Debug.println('+', "starting run() in fork() method "
+			+ "from Syscall.java: ");
+
+		AddrSpace space = ((UserThread) NachosThread
+			.currentThread()).space;
+
+		Debug.println('+', "Calling space.initRegisters(),"
+			+ " from nachos.kernel.userprog.Syscall.fork(...).new Runnable() {...}.run()");
+
+		space.initRegisters(); // set the initial register values
+
+		Debug.println('+', "Calling space.restoreState(),"
+			+ " from nachos.kernel.userprog.Syscall.fork(...).new Runnable() {...}.run()");
+
+		space.restoreState(); // load page table register
+
+		Debug.println('+',
+			"Now Starting CPU.runUserCode() from: nachos.kernel.userprog.Syscall.fork(...).new Runnable() {...}.run()");
+
+		CPU.runUserCode(); // jump to the user progam
+		Debug.ASSERT(false); // machine->Run never returns;
+		// the address space exits
+		// by doing the syscall "exit"
+	    }
+	}, addrSpace);
+	t.ptr = func;
+
+	// Update the program counter to point to the next instruction
+	// after the SYSCALL instruction.
+	CPU.writeRegister(MIPS.PrevPCReg, CPU.readRegister(MIPS.PCReg));
+	CPU.writeRegister(MIPS.PCReg, CPU.readRegister(MIPS.NextPCReg));
+	CPU.writeRegister(MIPS.NextPCReg, func + 4);
+
+	Nachos.scheduler.readyToRun(t);
     }
 
     /**

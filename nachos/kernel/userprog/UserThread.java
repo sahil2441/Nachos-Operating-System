@@ -28,6 +28,11 @@ public class UserThread extends NachosThread {
     /** The context in which this thread will execute. */
     public final AddrSpace space;
 
+    /**
+     * Pointer to the function that needs to be executed in fork()
+     */
+    public int ptr;
+
     // A thread running a user program actually has *two* sets of
     // CPU registers -- one for its state while executing user code,
     // and one for its state while executing kernel code.

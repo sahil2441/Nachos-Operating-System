@@ -291,4 +291,17 @@ public class AddrSpace {
 	    }
 	}
     }
+
+    public AddrSpace fork() {
+	AddrSpace addrSpace = new AddrSpace();
+	AddrSpace currentThreadSpace = this;
+
+	// copy members
+	addrSpace.addrSpaces = currentThreadSpace.addrSpaces;
+	addrSpace.pageTable = currentThreadSpace.pageTable;
+	addrSpace.spaceID = currentThreadSpace.spaceID;
+	addrSpace.semaphore = currentThreadSpace.semaphore;
+
+	return addrSpace;
+    }
 }

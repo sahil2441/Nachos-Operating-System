@@ -51,7 +51,7 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 	int type = CPU.readRegister(2);
 
 	int virtualAddress, virtualPageNumber, physicalPageAddress, index,
-		physicalPageNumber, len, pid;
+		physicalPageNumber, len, pid, startIndex;
 	AddrSpace space;
 	byte[] buf;
 
@@ -65,17 +65,19 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 	    switch (type) {
 
 	    case Syscall.SC_Halt:
+		Debug.println('+', "Syscall is : Syscall.Halt");
 		Syscall.halt();
 		break;
 
 	    case Syscall.SC_Fork:
-		Syscall.fork(1);
+		Debug.println('+', "Syscall is : Syscall.SC_Fork");
+		int pointerToFunction = CPU.readRegister(4);
+		Syscall.fork(pointerToFunction);
+		break;
 
-		// Syscall.Exec() returns the processID after it completes
-		// the process
 	    case Syscall.SC_Exec:
 		Debug.println('+', "Syscall is : Syscall.SC_Exec");
-		int startIndex = CPU.readRegister(4);
+		startIndex = CPU.readRegister(4);
 		String executableFile = obtainExecutableFileName(startIndex);
 		processID = Syscall.exec("test/" + executableFile);
 		Debug.println('+', "Proces ID after executing Syscall.Exec(): "
@@ -181,31 +183,6 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 	// Finish thread here
 	Nachos.scheduler.finishThread();
 
-    }
-
-    private int getPhysicalPageAddress(int virtualAddress) {
-	int virtualPageNumber = ((virtualAddress >> 7) & 0x1ffffff);
-	// get physical page number from virtual page number
-	int offset = (virtualAddress & 0x7f);
-
-	AddrSpace space = ((UserThread) NachosThread.currentThread()).space;
-
-	int physicalPageNumber = space.pageTable[virtualPageNumber].physicalPage;
-	int physicalPageAddress = ((physicalPageNumber << 7) | offset);
-
-	return physicalPageAddress;
-
-    }
-
-    private int obtainPID(int i) {
-	byte buffer[] = Machine.mainMemory;
-	while (i < Machine.mainMemory.length) {
-	    if ((char) buffer[i] > 8000) {
-		return (char) buffer[i];
-	    }
-	    i++;
-	}
-	return i;
     }
 
     private String obtainExecutableFileName(int ptr) {
