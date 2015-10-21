@@ -21,6 +21,9 @@ MAJOR CHANGES MADE:
 	  
 	 --nachos.kernel.userprog.Syscall.exit(int) takes care of the semaphore implemetation
 	   for executing join.
+	   
+	 -- nachos.kernel.userprog.Syscall.fork(int) 
+	 	method gets called when fork is called.
 	 
 DETAILED EXPLANATION:
 
