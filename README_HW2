@@ -92,6 +92,13 @@ To ensure that physical address are not same as virtual addresses, Ive created a
 and this array of booleans keeps a track of all the unused and used memory
 nachos.kernel.userprog.PhysicalMemoryManager.physicalMemoryArray 
 
+##Fork()
+In the method nachos.kernel.userprog.Syscall.fork(int)
+the pointer to the method that's passed to fork as an argument is int func. 
+The method gets executed in a new thread and we Update the program counter 
+to point to the next instruction after the SYSCALL instruction in the last part of this 
+method.
+
 
 
 
