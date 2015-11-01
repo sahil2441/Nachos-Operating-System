@@ -5,6 +5,5 @@
 int
 main()
 {
-  Exec("halt2");
-  Exit(0);
+  Exec("round_robin_test");
 }

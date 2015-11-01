@@ -8,7 +8,6 @@ int main()
 {
 	/* write STR to data file */
 	Write(STR_BEFORE, sizeof(STR_BEFORE)-1,ConsoleOutput);
-	int time=10;
-	Sleep(time);
+	Sleep(100000);
 	Write(STR_AFTER, sizeof(STR_AFTER)-1,ConsoleOutput);
 }

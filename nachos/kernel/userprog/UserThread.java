@@ -10,6 +10,7 @@
 
 package nachos.kernel.userprog;
 
+import nachos.kernel.threads.Semaphore;
 import nachos.machine.CPU;
 import nachos.machine.MIPS;
 import nachos.machine.NachosThread;
@@ -24,6 +25,34 @@ import nachos.machine.NachosThread;
  * @author Eugene W. Stark (Stony Brook University)
  */
 public class UserThread extends NachosThread {
+
+    /**
+     * Max number of ticks when round robin calls yield on any thread.
+     */
+    public final int QUANTUM = 10;
+
+    /**
+     * count variable is incremented each time a call is made to
+     * nachos.kernel.threads.Scheduler.TimerInterruptHandler.handleInterrupt()
+     */
+    public int count = 0;
+
+    /**
+     * Used in executing the sleep syscall. We maintain the number of ticks and
+     * decrememnt each time handleInterrupt is called:
+     * nachos.kernel.threads.Scheduler.TimerInterruptHandler.handleInterrupt().
+     * Once it's zero the semaphore.V() is called on this thread.
+     */
+    public int noOfTicksRemaining;
+
+    /**
+     * Again used in sleep syscall to pause a current thread for 't' time.
+     * semaphore.V() is called in this method
+     * nachos.kernel.threads.Scheduler.TimerInterruptHandler.handleInterrupt()
+     * if no of ticks remaning is =0.
+     * 
+     */
+    public Semaphore semaphore;
 
     /** The context in which this thread will execute. */
     public final AddrSpace space;

@@ -12,6 +12,8 @@ import nachos.Debug;
 import nachos.kernel.Nachos;
 import nachos.kernel.devices.ConsoleDriver;
 import nachos.kernel.filesys.OpenFile;
+import nachos.kernel.threads.Semaphore;
+import nachos.kernel.threads.test.ThreadTest;
 import nachos.machine.CPU;
 import nachos.machine.MIPS;
 import nachos.machine.Machine;
@@ -191,6 +193,7 @@ public class Syscall {
 	    }
 	}, space);
 	Nachos.scheduler.readyToRun(t);
+	new ThreadTest(1);
 
 	return ((UserThread) NachosThread.currentThread()).space.spaceID;
     }
@@ -433,6 +436,30 @@ public class Syscall {
 	Debug.println('+', "starting Yield() from Syscall.java: ");
 	Nachos.scheduler.yieldThread();
 
+    }
+
+    /**
+     * The idea is to add the current thread in a queue of sleeping threads,
+     * defined in scheduler, and call samaphore.P() on this thread.
+     * Semaphore.V() on this thread is called when number of ticks is exceeded--
+     * this implementation is defined in
+     * nachos.kernel.threads.Scheduler.TimerInterruptHandler.handleInterrupt()
+     * 
+     * @param sleepingTime
+     */
+
+    public static void sleep(int sleepingTime) {
+	UserThread userThread = ((UserThread) NachosThread.currentThread());
+	userThread.noOfTicksRemaining = sleepingTime;
+	Nachos.scheduler.getSleepThreadList().add(userThread);
+
+	// TODO Remove after testing
+	// add a new thread to ready to run list before calling semaphore.P()
+	// on this
+	// new ThreadTest(1);
+	userThread.semaphore = new Semaphore(
+		userThread.name + "-Semaphore for Sleep", 0);
+	userThread.semaphore.P();
     }
 
 }

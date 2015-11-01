@@ -14,8 +14,12 @@
 
 package nachos.kernel.threads;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import nachos.Debug;
 import nachos.kernel.Nachos;
+import nachos.kernel.userprog.UserThread;
 import nachos.machine.CPU;
 import nachos.machine.InterruptHandler;
 import nachos.machine.Machine;
@@ -49,6 +53,9 @@ import nachos.util.Queue;
  */
 public class Scheduler {
 
+    /** Queue of threads that are put on sleep by syscall Sleep() */
+    private final List<UserThread> sleepThreadList;
+
     /** Queue of threads that are ready to run, but not running. */
     private final Queue<NachosThread> readyList;
 
@@ -71,6 +78,7 @@ public class Scheduler {
     public Scheduler(NachosThread firstThread) {
 	readyList = new FIFOQueue<NachosThread>();
 	cpuList = new FIFOQueue<CPU>();
+	sleepThreadList = new ArrayList<>();
 
 	Debug.println('t', "Initializing scheduler");
 
@@ -362,6 +370,10 @@ public class Scheduler {
 	// current CPU goes idle.
     }
 
+    public List<UserThread> getSleepThreadList() {
+	return sleepThreadList;
+    }
+
     /**
      * Interrupt handler for the time-slice timer. A timer is set up to
      * interrupt the CPU periodically (once every Timer.DefaultInterval ticks).
@@ -391,7 +403,12 @@ public class Scheduler {
 	    // so that once the interrupt handler is done, it will appear as
 	    // if the interrupted thread called yield at the point it is
 	    // was interrupted.
+
+	    // for Sleep syscall
+	    decrementTicksForEachThread();
 	    yieldOnReturn();
+
+	    // System.out.println(Simulation.currentTime());
 	}
 
 	/**
@@ -408,15 +425,39 @@ public class Scheduler {
 	    CPU.setOnInterruptReturn(new Runnable() {
 		public void run() {
 		    if (NachosThread.currentThread() != null) {
-			Debug.println('t',
-				"Yielding current thread on interrupt return");
-			Nachos.scheduler.yieldThread();
+			try {
+			    UserThread userThread = (UserThread) NachosThread
+				    .currentThread();
+			    // Yield only if
+			    if (++userThread.count % 10 == 0) {
+				Debug.println('t',
+					"Yielding current thread on interrupt return");
+				Nachos.scheduler.yieldThread();
+			    }
+			} catch (Exception exception) {
+			    // Do nothing
+			}
 		    } else {
 			Debug.println('i',
 				"No current thread on interrupt return, skipping yield");
 		    }
 		}
 	    });
+	}
+
+    }
+
+    public static void decrementTicksForEachThread() {
+	List<UserThread> list = Nachos.scheduler.getSleepThreadList();
+	for (int i = 0; i < list.size(); i++) {
+	    UserThread thread = (UserThread) list.get(i);
+
+	    // since handleInterrupt is called after every 100 ticks
+	    thread.noOfTicksRemaining -= 100;
+	    if (thread.noOfTicksRemaining < 0) {
+		thread.semaphore.V();
+		list.remove(i);
+	    }
 	}
 
     }

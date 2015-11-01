@@ -47,9 +47,10 @@ public class ThreadTest implements Runnable {
      * Loop 5 times, yielding the CPU to another ready thread each iteration.
      */
     public void run() {
-	for (int num = 0; num < 5; num++) {
+	for (int num = 0; num < 50; num++) {
 	    Debug.println('+',
 		    "*** thread " + which + " looped " + num + " times");
+	    Nachos.consoleDriver.putChar((char) num);
 	    // Nachos.scheduler.yieldThread();
 	}
 	Nachos.scheduler.finishThread();

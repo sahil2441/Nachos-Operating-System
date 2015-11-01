@@ -98,6 +98,7 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 
 	    case Syscall.SC_Sleep:
 		int sleepingTime = CPU.readRegister(4);
+		Syscall.sleep(sleepingTime);
 		Debug.println('+', "Syscall is : Syscall.SC_Sleep");
 		break;
 

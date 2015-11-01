@@ -82,20 +82,20 @@ public class PhysicalMemoryManager {
     public int getIndex() {
 	Debug.println('+',
 		"Inside method: nachos.kernel.userprog.PhysicalMemoryManager.getIndex()");
-	PhysicalMemoryManager.pageLock.acquire();
+	// PhysicalMemoryManager.pageLock.acquire();
 	int i = 0;
 	while (physicalMemoryArray[i] && i < Machine.NumPhysPages) {
 	    i++;
 	}
 	if (i < Machine.NumPhysPages) {
 	    physicalMemoryArray[i] = true;
-	    PhysicalMemoryManager.pageLock.release();
+	    // PhysicalMemoryManager.pageLock.release();
 
 	    return i;
 	}
 	// no free memory
 	Debug.println('+', "No free memory right now. Returning -1.");
-	PhysicalMemoryManager.pageLock.release();
+	// PhysicalMemoryManager.pageLock.release();
 	return -1;
     }
 
