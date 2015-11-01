@@ -13,7 +13,6 @@ import nachos.kernel.Nachos;
 import nachos.kernel.devices.ConsoleDriver;
 import nachos.kernel.filesys.OpenFile;
 import nachos.kernel.threads.Semaphore;
-import nachos.kernel.threads.test.ThreadTest;
 import nachos.machine.CPU;
 import nachos.machine.MIPS;
 import nachos.machine.Machine;
@@ -193,7 +192,6 @@ public class Syscall {
 	    }
 	}, space);
 	Nachos.scheduler.readyToRun(t);
-	new ThreadTest(1);
 
 	return ((UserThread) NachosThread.currentThread()).space.spaceID;
     }

@@ -15,7 +15,8 @@ package nachos.kernel.threads.test;
 
 import nachos.Debug;
 import nachos.kernel.Nachos;
-import nachos.machine.NachosThread;
+import nachos.kernel.userprog.AddrSpace;
+import nachos.kernel.userprog.UserThread;
 
 /**
  * Set up a ping-pong between two threads, by forking two threads to execute
@@ -39,7 +40,11 @@ public class ThreadTest implements Runnable {
      */
     public ThreadTest(int w) {
 	which = w;
-	NachosThread t = new NachosThread("Test thread " + w, this);
+	// NachosThread t = new NachosThread("Test thread " + w, this);
+	// Nachos.scheduler.readyToRun(t);
+
+	AddrSpace space = new AddrSpace();
+	UserThread t = new UserThread("Thread from ThreadTest", this, space);
 	Nachos.scheduler.readyToRun(t);
     }
 
@@ -50,7 +55,8 @@ public class ThreadTest implements Runnable {
 	for (int num = 0; num < 50; num++) {
 	    Debug.println('+',
 		    "*** thread " + which + " looped " + num + " times");
-	    Nachos.consoleDriver.putChar((char) num);
+	    Nachos.consoleDriver.putChar((char) ((char) num + '\n'));
+	    // System.out.println(num);
 	    // Nachos.scheduler.yieldThread();
 	}
 	Nachos.scheduler.finishThread();

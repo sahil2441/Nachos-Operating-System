@@ -425,17 +425,13 @@ public class Scheduler {
 	    CPU.setOnInterruptReturn(new Runnable() {
 		public void run() {
 		    if (NachosThread.currentThread() != null) {
-			try {
-			    UserThread userThread = (UserThread) NachosThread
-				    .currentThread();
-			    // Yield only if
-			    if (++userThread.count % 10 == 0) {
-				Debug.println('t',
-					"Yielding current thread on interrupt return");
-				Nachos.scheduler.yieldThread();
-			    }
-			} catch (Exception exception) {
-			    // Do nothing
+			UserThread userThread = (UserThread) NachosThread
+				.currentThread();
+			// Yield only if
+			if (++userThread.count % 5 == 0) {
+			    Debug.println('t',
+				    "Yielding current thread on interrupt return");
+			    Nachos.scheduler.yieldThread();
 			}
 		    } else {
 			Debug.println('i',

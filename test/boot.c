@@ -10,6 +10,7 @@ void func(){
 
 int main(){
 
-		Fork(func);
+    Exec("round_robin_test");
+//	Fork(func);
 	}
 
