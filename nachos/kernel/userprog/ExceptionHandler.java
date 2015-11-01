@@ -96,6 +96,11 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		Syscall.join(pid);
 		break;
 
+	    case Syscall.SC_Sleep:
+		int sleepingTime = CPU.readRegister(4);
+		Debug.println('+', "Syscall is : Syscall.SC_Sleep");
+		break;
+
 	    case Syscall.SC_Yield:
 		Syscall.yield();
 		break;

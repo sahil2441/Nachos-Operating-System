@@ -14,13 +14,13 @@
 package nachos.kernel.threads.test;
 
 import nachos.Debug;
-import nachos.machine.NachosThread;
 import nachos.kernel.Nachos;
+import nachos.machine.NachosThread;
 
 /**
- * Set up a ping-pong between two threads, by forking two threads
- * to execute Runnable objects.
- *     
+ * Set up a ping-pong between two threads, by forking two threads to execute
+ * Runnable objects.
+ * 
  * @author Thomas Anderson (UC Berkeley), original C++ version
  * @author Peter Druschel (Rice University), Java translation
  * @author Eugene W. Stark (Stony Brook University)
@@ -31,10 +31,11 @@ public class ThreadTest implements Runnable {
     private int which;
 
     /**
-     * Initialize an instance of ThreadTest and start a new thread running
-     * on it.
+     * Initialize an instance of ThreadTest and start a new thread running on
+     * it.
      *
-     * @param w  An integer identifying this instance of ThreadTest.
+     * @param w
+     *            An integer identifying this instance of ThreadTest.
      */
     public ThreadTest(int w) {
 	which = w;
@@ -43,17 +44,17 @@ public class ThreadTest implements Runnable {
     }
 
     /**
-     * Loop 5 times, yielding the CPU to another ready thread 
-     * each iteration.
+     * Loop 5 times, yielding the CPU to another ready thread each iteration.
      */
     public void run() {
 	for (int num = 0; num < 5; num++) {
-	    Debug.println('+', "*** thread " + which + " looped " + num + " times");
-	    Nachos.scheduler.yieldThread();
+	    Debug.println('+',
+		    "*** thread " + which + " looped " + num + " times");
+	    // Nachos.scheduler.yieldThread();
 	}
 	Nachos.scheduler.finishThread();
     }
-    
+
     /**
      * Entry point for the test.
      */
@@ -61,6 +62,9 @@ public class ThreadTest implements Runnable {
 	Debug.println('+', "Entering ThreadTest");
 	new ThreadTest(1);
 	new ThreadTest(2);
+	new ThreadTest(3);
+	new ThreadTest(4);
+	new ThreadTest(5);
     }
 
 }

@@ -68,6 +68,9 @@ public class Syscall {
     /** Integer code identifying the "Remove" system call. */
     public static final byte SC_Remove = 11;
 
+    /** Integer code identifying the "Remove" system call. */
+    public static final byte SC_Sleep = 12;
+
     /**
      * Global variable for Process ID
      */

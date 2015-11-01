@@ -30,6 +30,7 @@
 #define SC_Fork		9
 #define SC_Yield	10
 #define SC_Remove	11
+#define SC_Sleep	12
 
 #ifndef IN_ASM
 
@@ -127,6 +128,11 @@ void Fork(void (*func)());
  * or not. 
  */
 void Yield();		
+
+/* 
+ * Put a particular thread on sleep for time t
+ */
+void Sleep(int t);		
 
 #endif /* IN_ASM */
 

@@ -69,6 +69,16 @@ Exec:
 
 	.globl Join
 	.ent	Join
+
+Sleep:
+	addiu $2,$0,SC_Sleep
+	syscall
+	j	$31
+	.end Sleep
+
+	.globl Sleep
+	.ent	Sleep
+
 Join:
 	addiu $2,$0,SC_Join
 	syscall
