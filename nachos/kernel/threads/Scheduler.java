@@ -428,9 +428,12 @@ public class Scheduler {
 			UserThread userThread = (UserThread) NachosThread
 				.currentThread();
 			// Yield only if
-			if (++userThread.count % 5 == 0) {
-			    Debug.println('t',
-				    "Yielding current thread on interrupt return");
+			if (++userThread.count % 10 == 0) {
+			    Debug.println('+', "Yielding current thread: "
+				    + userThread.name + " on interrupt return");
+			    Debug.println('+',
+				    "Count for this thread has reached : "
+					    + userThread.count);
 			    Nachos.scheduler.yieldThread();
 			}
 		    } else {

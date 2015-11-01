@@ -185,7 +185,7 @@ public class Syscall {
 		Debug.println('+',
 			"Now Starting CPU.runUserCode() from: nachos.kernel.userprog.Syscall.exec(...).new Runnable() {...}.run()");
 
-		CPU.runUserCode(); // jump to the user progam
+		CPU.runUserCode(); // jump to the user program
 		Debug.ASSERT(false); // machine->Run never returns;
 		// the address space exits
 		// by doing the syscall "exit"

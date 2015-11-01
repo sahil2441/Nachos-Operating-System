@@ -5,10 +5,8 @@
 
 int main()
 {
-  int i, j;
-
-	/* write STR to data file */
-	 for( i=0;i<5;i++) {
-		Write(STR, sizeof(STR),ConsoleOutput);
-  }
+	//start two exec and play ping pong
+	Exec("exec1");
+	Exec("exec2");
+	
 }
