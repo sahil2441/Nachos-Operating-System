@@ -242,6 +242,8 @@ public class Scheduler {
      * @return the thread to be scheduled onto a CPU.
      */
     private NachosThread findNextThreadInMultiFeedbackQueueList() {
+	Debug.println('+', "Inside method: "
+		+ "nachos.kernel.threads.Scheduler.findNextThreadInMultiFeedbackQueueList()");
 	NachosThread result = null;
 	for (int i = 0; i < multiFeedbackQueueList.size(); i++) {
 	    result = multiFeedbackQueueList.get(i).poll();
@@ -249,6 +251,7 @@ public class Scheduler {
 		Nachos.scheduler.currentQueueLevel = i + 1;
 		UserThread thread = (UserThread) result;
 		thread.ticksMultiFeedback = 0;
+		Debug.println('+', "Next Thread found at list index: " + i);
 		return thread;
 	    }
 	}
@@ -288,6 +291,10 @@ public class Scheduler {
 	// If the current thread wants to keep running and there is no other
 	// thread to run,
 	// do nothing.
+	// Modify this functionality for Multi Feedback
+	// If next thread is null do not return from here
+	// Instead, run current thread again.
+
 	if (status == NachosThread.RUNNING && nextThread == null) {
 	    Debug.println('t', "No other thread to run -- " + currentThread.name
 		    + " continuing");
@@ -316,7 +323,10 @@ public class Scheduler {
 		    // to the appropriate queue
 		    int queueNumber = getQueueNumber();
 		    insertCurrentThreadBackToQueue(currentThread, queueNumber);
-		} else {
+		}
+		// In case of finished find the cuurent thread in the list of
+		// queues and pop it out.
+		else {
 		    // Set the new status of the thread before relinquishing the
 		    // CPU.
 		    if (status != NachosThread.FINISHED)
