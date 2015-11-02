@@ -38,12 +38,18 @@ public class UserThread extends NachosThread {
     public int count = 0;
 
     /**
+     * Used to keep a count of ticks in round robin scheduling. Initializing
+     * with 1.
+     */
+    public int ticksMultiFeedback = 0;
+
+    /**
      * Used in executing the sleep syscall. We maintain the number of ticks and
      * decrememnt each time handleInterrupt is called:
      * nachos.kernel.threads.Scheduler.TimerInterruptHandler.handleInterrupt().
      * Once it's zero the semaphore.V() is called on this thread.
      */
-    public int noOfTicksRemaining;
+    public int noOfTicksRemainingForSleep;
 
     /**
      * Again used in sleep syscall to pause a current thread for 't' time.

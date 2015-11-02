@@ -1,0 +1,28 @@
+##################################################################
+						Sahil Jain
+						110281300
+						sahjain@cs.stonybrook.edu
+##################################################################
+
+MAJOR CHANGES MADE:
+	—Round Robin Scheduling —Modified the method 
+	nachos.kernel.threads.Scheduler.TimerInterruptHandler.yieldOnReturn()
+	so that it now yields a thread at a quantum time of 1000 ticks.
+	
+	—Sleep System Call:
+	Added a new method 
+	nachos.kernel.threads.Scheduler.decrementTicksForEachThread()
+	This method decrements the time left in each thread before it gets added
+	to read to run list.
+
+
+
+DETAILED EXPLANATION:
+	-Round Robin
+	
+How to test ?
+	
+
+	
+	
+

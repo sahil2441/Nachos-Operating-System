@@ -185,6 +185,17 @@ public class Options {
     /** Should we run the task manager? */
     public boolean TASK_MANAGER = false;
 
+    /** Should we implement the Round Robin Scheduling? */
+    public boolean ROUND_ROBIN = false;
+
+    /** Should we implement the Multi Feedback Scheduling? */
+    public boolean MULTI_FEEDBACK = true;
+
+    /**
+     * This is the quantum time to be used by the first queue
+     */
+    public int quantumFirstQueue = 1000;
+
     public Options(String[] args) {
 	argList = Arrays.asList(args);
 	parseArgList();

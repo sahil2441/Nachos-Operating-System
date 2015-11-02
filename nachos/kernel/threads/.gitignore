@@ -13,3 +13,5 @@
 /TaskManager$Task.class
 /TaskManager.class
 /TimerCustom.class
+/Scheduler$TimerInterruptHandler$2.class
+/Scheduler$TimerInterruptHandler$3.class

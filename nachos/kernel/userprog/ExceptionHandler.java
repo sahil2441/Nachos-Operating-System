@@ -102,6 +102,9 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		Debug.println('+', "Syscall is : Syscall.SC_Sleep");
 		break;
 
+	    case Syscall.SC_Print:
+		Syscall.print();
+		break;
 	    case Syscall.SC_Yield:
 		Syscall.yield();
 		break;

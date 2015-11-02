@@ -31,6 +31,8 @@
 #define SC_Yield	10
 #define SC_Remove	11
 #define SC_Sleep	12
+#define SC_Print	13
+
 
 #ifndef IN_ASM
 
@@ -133,6 +135,12 @@ void Yield();
  * Put a particular thread on sleep for time t
  */
 void Sleep(int t);		
+
+/* 
+ * Added for debugging purpose
+ * Prints to console
+ */
+void Print();		
 
 #endif /* IN_ASM */
 

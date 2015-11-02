@@ -69,8 +69,11 @@ public class Syscall {
     /** Integer code identifying the "Remove" system call. */
     public static final byte SC_Remove = 11;
 
-    /** Integer code identifying the "Remove" system call. */
+    /** Integer code identifying the "Sleep" system call. */
     public static final byte SC_Sleep = 12;
+
+    /** Integer code identifying the "Print" system call. */
+    public static final byte SC_Print = 13;
 
     /**
      * Global variable for Process ID
@@ -448,7 +451,7 @@ public class Syscall {
 
     public static void sleep(int sleepingTime) {
 	UserThread userThread = ((UserThread) NachosThread.currentThread());
-	userThread.noOfTicksRemaining = sleepingTime;
+	userThread.noOfTicksRemainingForSleep = sleepingTime;
 	Nachos.scheduler.getSleepThreadList().add(userThread);
 
 	// TODO Remove after testing
@@ -458,6 +461,13 @@ public class Syscall {
 	userThread.semaphore = new Semaphore(
 		userThread.name + "-Semaphore for Sleep", 0);
 	userThread.semaphore.P();
+    }
+
+    /**
+     * Print system call Prints to console -- for debuggin purposes
+     */
+    public static void print() {
+	System.out.println(NachosThread.currentThread().name);
     }
 
 }

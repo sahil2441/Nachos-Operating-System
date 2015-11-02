@@ -188,21 +188,6 @@ public class AddrSpace {
     }
 
     /**
-     * The method checks if address obtained is ==-1, if yes then make a exit
-     * system call
-     * 
-     * @param physicalPageAddress
-     */
-    private void checkPhysicalPageAddress(int physicalPageAddress) {
-	if (physicalPageAddress == -1) {
-	    Debug.println('+',
-		    "Not Enough Memory. Making a system call to exit the "
-			    + "program");
-	    Syscall.exit(0);
-	}
-    }
-
-    /**
      * Initialize the user-level register set to values appropriate for starting
      * execution of a user program loaded in this address space.
      *

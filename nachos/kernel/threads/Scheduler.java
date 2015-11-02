@@ -68,6 +68,28 @@ public class Scheduler {
     /** Spin lock for mutually exclusive access to scheduler state. */
     private final SpinLock mutex = new SpinLock("scheduler mutex");
 
+    /** No of queues for Multi Feedback */
+    public int NO_OF_QUEUES = 20;
+
+    /** Value of constant p for exponential averaging */
+    public final double p = 0.4;
+
+    /**
+     * Current queue level for Multi Feedback to decide Quantum ticks. This is a
+     * dynamic variable. 1 is the first level.
+     */
+    public int currentQueueLevel = 1;
+
+    /**
+     * Average CPU burst that changes everytime a thread finishes execution.
+     * Either the thread finishes completes execution or it exhausts its
+     * quantum, in either case this is recalculated.
+     */
+    public double averageCPUBurst = 1000;
+
+    /** Queue of threads for Multi Feedback implementation */
+    private final List<Queue<NachosThread>> multiFeedbackQueueList;
+
     /**
      * Initialize the scheduler. Set the list of ready but not running threads
      * to empty. Initialize the list of CPUs to contain all the available CPUs.
@@ -79,6 +101,8 @@ public class Scheduler {
 	readyList = new FIFOQueue<NachosThread>();
 	cpuList = new FIFOQueue<CPU>();
 	sleepThreadList = new ArrayList<>();
+	multiFeedbackQueueList = new ArrayList<>();
+	initializemultiFeedbackQueueList();
 
 	Debug.println('t', "Initializing scheduler");
 
@@ -156,9 +180,17 @@ public class Scheduler {
 	Debug.ASSERT(CPU.getLevel() == CPU.IntOff && mutex.isLocked());
 
 	Debug.println('t', "Putting thread on ready list: " + thread.name);
-
 	thread.setStatus(NachosThread.READY);
-	readyList.offer(thread);
+
+	// in case of multi feedback scheduling thread is not put on
+	// ready list queue, but it's put on a separate queue which is the first
+	// queue in the list
+	if (Nachos.options.MULTI_FEEDBACK) {
+	    (multiFeedbackQueueList.get(0)).offer(thread);
+
+	} else {
+	    readyList.offer(thread);
+	}
     }
 
     /**
@@ -189,8 +221,37 @@ public class Scheduler {
     private NachosThread findNextToRun() {
 	Debug.ASSERT(CPU.getLevel() == CPU.IntOff);
 	mutex.acquire();
-	NachosThread result = readyList.poll();
+
+	// Modify this method to take care of the multi feedback scheduling
+	NachosThread result = null;
+
+	if (Nachos.options.MULTI_FEEDBACK) {
+	    result = findNextThreadInMultiFeedbackQueueList();
+
+	} else {
+	    result = readyList.poll();
+	}
 	mutex.release();
+	return result;
+    }
+
+    /**
+     * Return the next thread to be scheduled onto a CPU incase of multi
+     * feedback scheduling.
+     *
+     * @return the thread to be scheduled onto a CPU.
+     */
+    private NachosThread findNextThreadInMultiFeedbackQueueList() {
+	NachosThread result = null;
+	for (int i = 0; i < multiFeedbackQueueList.size(); i++) {
+	    result = multiFeedbackQueueList.get(i).poll();
+	    if (result != null) {
+		Nachos.scheduler.currentQueueLevel = i + 1;
+		UserThread thread = (UserThread) result;
+		thread.ticksMultiFeedback = 0;
+		return thread;
+	    }
+	}
 	return result;
     }
 
@@ -247,15 +308,33 @@ public class Scheduler {
 	    Debug.println('t', "Switching " + CPU.getName() + " from "
 		    + currentThread.name + " to " + nextThread.name);
 
-	    if (status == NachosThread.RUNNING) {
-		// The current thread wants to keep running -- put it back in
-		// the ready list.
-		makeReady(currentThread);
+	    // Modified yieldCPU at this point to accomodate Multi Feedback
+	    // scheduling
+	    if (Nachos.options.MULTI_FEEDBACK) {
+		if (status == NachosThread.RUNNING) {
+		    // The current thread wants to keep running -- put it back
+		    // to the appropriate queue
+		    int queueNumber = getQueueNumber();
+		    insertCurrentThreadBackToQueue(currentThread, queueNumber);
+		} else {
+		    // Set the new status of the thread before relinquishing the
+		    // CPU.
+		    if (status != NachosThread.FINISHED)
+			currentThread.setStatus(status);
+		}
+
 	    } else {
-		// Set the new status of the thread before relinquishing the
-		// CPU.
-		if (status != NachosThread.FINISHED)
-		    currentThread.setStatus(status);
+		if (status == NachosThread.RUNNING) {
+		    // The current thread wants to keep running -- put it back
+		    // in
+		    // the ready list.
+		    makeReady(currentThread);
+		} else {
+		    // Set the new status of the thread before relinquishing the
+		    // CPU.
+		    if (status != NachosThread.FINISHED)
+			currentThread.setStatus(status);
+		}
 	    }
 	    CPU.switchTo(nextThread, mutex);
 	} else {
@@ -275,6 +354,45 @@ public class Scheduler {
 	currentThread.restoreState();
 
 	Debug.println('t', "Now in thread: " + currentThread.name);
+    }
+
+    private void insertCurrentThreadBackToQueue(NachosThread currentThread,
+	    int queueNumber) {
+	Debug.println('+', "Inside method: "
+		+ "nachos.kernel.threads.Scheduler.insertCurrentThreadBackToQueue(NachosThread, int) ");
+
+	int index = queueNumber;
+	for (int i = 0; i < NO_OF_QUEUES; i++) {
+	    if (i == index) {
+		Debug.println('+', "Adding thread: " + currentThread.name
+			+ " at index: " + index);
+
+		multiFeedbackQueueList.get(index).offer(currentThread);
+	    } else if (i > index) {
+		break;
+
+	    }
+	}
+    }
+
+    private int getQueueNumber() {
+	Debug.println('+',
+		"Inside method: nachos.kernel.threads.Scheduler.getQueueNumber()");
+	double newAverage = p
+		* (Nachos.options.quantumFirstQueue
+			* Math.pow(2, Nachos.scheduler.currentQueueLevel))
+		+ (1 - p) * averageCPUBurst;
+	Debug.println('+', "New Average CPU Burst is:" + newAverage);
+	Nachos.scheduler.averageCPUBurst = newAverage;
+	int i = 0;
+
+	while (!(newAverage < (int) (Math.pow(2, i)
+		* Nachos.options.quantumFirstQueue))) {
+	    i++;
+	}
+	Debug.ASSERT(!(i > NO_OF_QUEUES));
+	return i;
+
     }
 
     /**
@@ -405,10 +523,18 @@ public class Scheduler {
 	    // was interrupted.
 
 	    // for Sleep syscall
+	    // this method os useful only if the list of sleeping threads is not
+	    // empty
 	    decrementTicksForEachThread();
-	    yieldOnReturn();
 
-	    // System.out.println(Simulation.currentTime());
+	    // handling of threads as per the case
+	    if (Nachos.options.MULTI_FEEDBACK) {
+		yieldOnReturnMultiFeedback();
+	    } else if (Nachos.options.ROUND_ROBIN) {
+		yieldOnReturnRoundRobin();
+	    } else {
+		yieldOnReturn();
+	    }
 	}
 
 	/**
@@ -425,15 +551,36 @@ public class Scheduler {
 	    CPU.setOnInterruptReturn(new Runnable() {
 		public void run() {
 		    if (NachosThread.currentThread() != null) {
+			Debug.println('t',
+				"Yielding current thread on interrupt return");
+			Nachos.scheduler.yieldThread();
+		    } else {
+			Debug.println('i',
+				"No current thread on interrupt return, skipping yield");
+		    }
+		}
+	    });
+	}
+
+	/**
+	 * Modified version of above method yieldOnReturn() for Round Robin
+	 * Scheduling.
+	 */
+	private void yieldOnReturnRoundRobin() {
+	    Debug.println('i', "Yield on interrupt return requested");
+	    CPU.setOnInterruptReturn(new Runnable() {
+		public void run() {
+		    if (NachosThread.currentThread() != null) {
 			UserThread userThread = (UserThread) NachosThread
 				.currentThread();
 			// Yield only if
 			if (++userThread.count % 10 == 0) {
+			    Debug.println('+',
+				    "Count for this thread: " + userThread.name
+					    + " has reached : "
+					    + userThread.count);
 			    Debug.println('+', "Yielding current thread: "
 				    + userThread.name + " on interrupt return");
-			    Debug.println('+',
-				    "Count for this thread has reached : "
-					    + userThread.count);
 			    Nachos.scheduler.yieldThread();
 			}
 		    } else {
@@ -444,7 +591,55 @@ public class Scheduler {
 	    });
 	}
 
+	/**
+	 * Modified version of above method yieldOnReturn() for Multi Feedback
+	 * Scheduling.
+	 */
+	private void yieldOnReturnMultiFeedback() {
+	    Debug.println('i', "Yield on interrupt return requested");
+	    CPU.setOnInterruptReturn(new Runnable() {
+		public void run() {
+		    if (NachosThread.currentThread() != null) {
+			UserThread userThread = (UserThread) NachosThread
+				.currentThread();
+			// Yield only if the count on current thread exceeds the
+			// threshold
+			int threshold = (int) Math.pow(2,
+				Nachos.scheduler.currentQueueLevel - 1)
+				* Nachos.options.quantumFirstQueue;
+			// increase by 100 ticks
+			userThread.ticksMultiFeedback += 100;
+			if (!(userThread.ticksMultiFeedback < threshold)) {
+			    Debug.println('+', "Inside method:"
+				    + " nachos.kernel.threads.Scheduler.TimerInterruptHandler.yieldOnReturnMultiFeedback()"
+				    + " ticksMultiFeedback exceeded the threshold for current level.");
+			    Debug.println('+',
+				    "Count for this thread: " + userThread.name
+					    + " has reached : "
+					    + userThread.ticksMultiFeedback);
+			    Debug.println('+', "Yielding current thread "
+				    + userThread.name
+				    + " on interrupt return, aand puting it back on next/current queue.");
+
+			    // yield CPU - which is called by yield thread- is
+			    // modified to handle Multi feedback
+			    // scheduling
+			    Nachos.scheduler.yieldThread();
+			}
+		    } else {
+			Debug.println('i',
+				"Not skipping current thread at this time.");
+		    }
+		}
+	    });
+	}
     }
+
+    /**
+     * Called every time the method {@link Scheduler.TimerInterruptHandler}} is
+     * called by timer. That means that this method is called every 100 ticks.
+     * Used in implementation of sleep.
+     */
 
     public static void decrementTicksForEachThread() {
 	List<UserThread> list = Nachos.scheduler.getSleepThreadList();
@@ -452,11 +647,25 @@ public class Scheduler {
 	    UserThread thread = (UserThread) list.get(i);
 
 	    // since handleInterrupt is called after every 100 ticks
-	    thread.noOfTicksRemaining -= 100;
-	    if (thread.noOfTicksRemaining < 0) {
+	    thread.noOfTicksRemainingForSleep -= 100;
+	    if (thread.noOfTicksRemainingForSleep < 0) {
 		thread.semaphore.V();
 		list.remove(i);
 	    }
+	}
+
+    }
+
+    public List<Queue<NachosThread>> getMultiFeedbackQueueList() {
+	return multiFeedbackQueueList;
+    }
+
+    /**
+     * Initilaizes Queues in list as per the size NO_OF_QUEUES }
+     */
+    private void initializemultiFeedbackQueueList() {
+	for (int i = 0; i < NO_OF_QUEUES; i++) {
+	    multiFeedbackQueueList.add(new FIFOQueue<NachosThread>());
 	}
 
     }
