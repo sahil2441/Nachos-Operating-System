@@ -5,8 +5,8 @@
 ##################################################################
 
 MAJOR CHANGES MADE:
-	—Round Robin Scheduling —Modified the method 
-	nachos.kernel.threads.Scheduler.TimerInterruptHandler.yieldOnReturn()
+	—Round Robin Scheduling —Added a new method 
+	nachos.kernel.threads.Scheduler.TimerInterruptHandler.yieldOnReturnRoundRobin()
 	so that it now yields a thread at a quantum time of 1000 ticks.
 	
 	—Sleep System Call:
@@ -14,13 +14,101 @@ MAJOR CHANGES MADE:
 	nachos.kernel.threads.Scheduler.decrementTicksForEachThread()
 	This method decrements the time left in each thread before it gets added
 	to read to run list.
+	
+	-Multi Level Feedback Scheduling
+	Added a new method
+	nachos.kernel.threads.Scheduler.TimerInterruptHandler.yieldOnReturnMultiFeedback()
+	This method is called on every 100th tick of CP if this flag is set true
+	nachos.Options.MULTI_FEEDBACK
+	The method checks if the 
+	nachos.kernel.userprog.UserThread.ticksMultiFeedback
+	has exceeded the threshold ticks for the particular queue.
+	If yes then the current thread is moved to the next queue based on the exponential
+	averaging scheme.
 
+##########################################################
+					How to test ?
+##########################################################
 
+	-Sleep
+	
+	Make sure that the following flag are set false:
+	nachos.Options.ROUND_ROBIN
+	nachos.Options.MULTI_FEEDBACK
+	
+	Enter the following in the run configurations:
+	-d -ps -x test/sleep_test
+	'sleep_test' is a user program to test the Sleep() system call.
+	I've also added a new system call- Print() that prints the name of the thread in 
+	the main console(not Nachos console).
+	In sleep_test we call Print() once before putting pur system on sleep for x number of ticks
+	and then again after the syscall Sleep().
+	I've used semaphore in the method 
+	nachos.kernel.userprog.Syscall.sleep(int)
+	to implement sleep() syscall. The semaphore in a particular user thread is called with semaphore.P() 
+	and again semaphore.V() is called in the method
+	nachos.kernel.threads.Scheduler.decrementTicksForEachThread()
+	PLease note that since our method
+	nachos.kernel.threads.Scheduler.TimerInterruptHandler.handleInterrupt()
+	is called on the CPU ticks that are multiple of hundred, our sleep syscall will not work as expected if
+	we give some arbitrary amount of ticks for thread to sleep other than a multiple of hundred.  
 
-DETAILED EXPLANATION:
+##########################################################
+
 	-Round Robin
 	
-How to test ?
+	Set the following flag true
+	nachos.Options.ROUND_ROBIN
+	
+	Set the following in the run arguments
+	-d -ps -x test/round_robin_test
+	
+	This user test program calls exec() syscall three times and starts three threads.
+	Each of them runs for a maximum of quantum time as defined here
+	nachos.Options.ROUND_ROBIN_QUANTUM
+	The three threads runs for a max of ticks equal to quantum time defined in 
+	nachos.Options.ROUND_ROBIN_QUANTUM
+	and plays a kind of ping pong with one another. 
+	Each thread's number of ticks is defined here
+	nachos.kernel.userprog.UserThread.count
+	
+##########################################################
+
+	-Multi Feedback
+	
+	Set the following flag true
+	nachos.Options.MULTI_FEEDBACK
+	
+	and the following false
+	nachos.Options.ROUND_ROBIN
+	
+	Set the following in the run arguments
+	-d -ps -x test/multi_feedback_test
+	
+	The quantum ticks for the first queue(i.e the one with the max priority) is set here and hence configurable
+	nachos.Options.MULTI_FEEDBACK_QUANTUM
+	
+	Number of queues for Multi Feedback is maintained here and hence configurable
+	nachos.Options.NO_OF_QUEUES
+	
+	The user program multi_feedback_test creates three User Threads that run for different number of Ticks.
+	The method 
+	nachos.kernel.threads.Scheduler.TimerInterruptHandler.yieldOnReturnMultiFeedback()
+	is called every 100 ticks and checks whether the current thread has exceeded the quantum ticks
+	for that particular queue. If yes, it moves this thread to the next queue. 
+	
+	It also calculates the average CPU burst using exponential averaging.
+	nachos.kernel.threads.Scheduler.getQueueNumber().newAverage
+	based on constant p
+	nachos.kernel.threads.Scheduler.p
+	
+##########################################################
+
+	-Testing the Scheduler
+	
+##########################################################
+
+	-Console Device Driver
 	
 
 	

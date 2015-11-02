@@ -27,11 +27,6 @@ import nachos.machine.NachosThread;
 public class UserThread extends NachosThread {
 
     /**
-     * Max number of ticks when round robin calls yield on any thread.
-     */
-    public final int QUANTUM = 10;
-
-    /**
      * count variable is incremented each time a call is made to
      * nachos.kernel.threads.Scheduler.TimerInterruptHandler.handleInterrupt()
      */

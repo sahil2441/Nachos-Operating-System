@@ -68,9 +68,6 @@ public class Scheduler {
     /** Spin lock for mutually exclusive access to scheduler state. */
     private final SpinLock mutex = new SpinLock("scheduler mutex");
 
-    /** No of queues for Multi Feedback */
-    public int NO_OF_QUEUES = 20;
-
     /** Value of constant p for exponential averaging */
     public final double p = 0.4;
 
@@ -372,7 +369,7 @@ public class Scheduler {
 		+ "nachos.kernel.threads.Scheduler.insertCurrentThreadBackToQueue(NachosThread, int) ");
 
 	int index = queueNumber;
-	for (int i = 0; i < NO_OF_QUEUES; i++) {
+	for (int i = 0; i < Nachos.options.NO_OF_QUEUES; i++) {
 	    if (i == index) {
 		Debug.println('+', "Adding thread: " + currentThread.name
 			+ " at index: " + index);
@@ -389,7 +386,7 @@ public class Scheduler {
 	Debug.println('+',
 		"Inside method: nachos.kernel.threads.Scheduler.getQueueNumber()");
 	double newAverage = p
-		* (Nachos.options.quantumFirstQueue
+		* (Nachos.options.MULTI_FEEDBACK_QUANTUM
 			* Math.pow(2, Nachos.scheduler.currentQueueLevel))
 		+ (1 - p) * averageCPUBurst;
 	Debug.println('+', "New Average CPU Burst is:" + newAverage);
@@ -397,10 +394,10 @@ public class Scheduler {
 	int i = 0;
 
 	while (!(newAverage < (int) (Math.pow(2, i)
-		* Nachos.options.quantumFirstQueue))) {
+		* Nachos.options.MULTI_FEEDBACK_QUANTUM))) {
 	    i++;
 	}
-	Debug.ASSERT(!(i > NO_OF_QUEUES));
+	Debug.ASSERT(!(i > Nachos.options.NO_OF_QUEUES));
 	return i;
 
     }
@@ -583,8 +580,10 @@ public class Scheduler {
 		    if (NachosThread.currentThread() != null) {
 			UserThread userThread = (UserThread) NachosThread
 				.currentThread();
-			// Yield only if
-			if (++userThread.count % 10 == 0) {
+			// Increment count every time by 100
+			userThread.count += 100;
+			if (userThread.count
+				% Nachos.options.ROUND_ROBIN_QUANTUM == 0) {
 			    Debug.println('+',
 				    "Count for this thread: " + userThread.name
 					    + " has reached : "
@@ -616,7 +615,7 @@ public class Scheduler {
 			// threshold
 			int threshold = (int) Math.pow(2,
 				Nachos.scheduler.currentQueueLevel - 1)
-				* Nachos.options.quantumFirstQueue;
+				* Nachos.options.MULTI_FEEDBACK_QUANTUM;
 			// increase by 100 ticks
 			userThread.ticksMultiFeedback += 100;
 			if (!(userThread.ticksMultiFeedback < threshold)) {
@@ -671,10 +670,10 @@ public class Scheduler {
     }
 
     /**
-     * Initilaizes Queues in list as per the size NO_OF_QUEUES }
+     * Initializes Queues in list as per the size NO_OF_QUEUES
      */
     private void initializemultiFeedbackQueueList() {
-	for (int i = 0; i < NO_OF_QUEUES; i++) {
+	for (int i = 0; i < Nachos.options.NO_OF_QUEUES; i++) {
 	    multiFeedbackQueueList.add(new FIFOQueue<NachosThread>());
 	}
 

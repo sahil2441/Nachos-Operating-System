@@ -7,7 +7,7 @@
 int main()
 {
 	/* write STR to data file */
-	Write(STR_BEFORE, sizeof(STR_BEFORE)-1,ConsoleOutput);
-	Sleep(100000);
-	Write(STR_AFTER, sizeof(STR_AFTER)-1,ConsoleOutput);
+	Print();
+	Sleep(10);
+	Print();
 }

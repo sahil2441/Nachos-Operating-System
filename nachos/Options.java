@@ -192,9 +192,18 @@ public class Options {
     public boolean MULTI_FEEDBACK = true;
 
     /**
+     * This is the quantum time for Round Robin Scheduling. Max number of ticks
+     * when round robin calls yield on any thread.
+     */
+    public final int ROUND_ROBIN_QUANTUM = 1000;
+
+    /**
      * This is the quantum time to be used by the first queue
      */
-    public int quantumFirstQueue = 1000;
+    public final int MULTI_FEEDBACK_QUANTUM = 1000;
+
+    /** No of queues for Multi Feedback */
+    public int NO_OF_QUEUES = 20;
 
     public Options(String[] args) {
 	argList = Arrays.asList(args);
