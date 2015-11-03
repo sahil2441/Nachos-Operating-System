@@ -186,10 +186,10 @@ public class Options {
     public boolean TASK_MANAGER = false;
 
     /** Should we implement the Round Robin Scheduling? */
-    public boolean ROUND_ROBIN = false;
+    public boolean ROUND_ROBIN = true;
 
     /** Should we implement the Multi Feedback Scheduling? */
-    public boolean MULTI_FEEDBACK = true;
+    public boolean MULTI_FEEDBACK = false;
 
     /**
      * This is the quantum time for Round Robin Scheduling. Max number of ticks

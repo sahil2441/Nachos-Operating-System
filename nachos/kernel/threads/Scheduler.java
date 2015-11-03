@@ -615,11 +615,12 @@ public class Scheduler {
 	    UserThread userThread = (UserThread) Nachos.scheduler.cpuThreadMap
 		    .get(currentCPU);
 	    String threadName = userThread == null ? "null" : userThread.name;
-	    // Debug.println('+', "CPU: " + currentCPU.name
-	    // + ", Corresponding Thread: " + threadName);
 
 	    // handling of threads as per the case
 	    if (Nachos.options.MULTI_FEEDBACK) {
+		Debug.println('+', "CPU: " + currentCPU.name
+			+ ", Corresponding Thread: " + threadName);
+
 		handleInterruptForMultiFeedback(userThread);
 	    } else if (Nachos.options.ROUND_ROBIN) {
 		yieldOnReturnRoundRobin();
@@ -659,7 +660,6 @@ public class Scheduler {
 	 * Modified version of above method yieldOnReturn() for Round Robin
 	 * Scheduling.
 	 */
-	// TODO Take this logic out of yield methods
 	private void yieldOnReturnRoundRobin() {
 	    Debug.println('i', "Yield on interrupt return requested");
 	    CPU.setOnInterruptReturn(new Runnable() {
