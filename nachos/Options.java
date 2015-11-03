@@ -198,7 +198,8 @@ public class Options {
     public final int ROUND_ROBIN_QUANTUM = 1000;
 
     /**
-     * This is the quantum time to be used by the first queue
+     * This is the quantum time to be used by the first queue of Multi Feedback
+     * Scheduling.
      */
     public final int MULTI_FEEDBACK_QUANTUM = 1000;
 

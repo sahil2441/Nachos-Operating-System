@@ -10,6 +10,7 @@
 
 package nachos.kernel.userprog;
 
+import nachos.kernel.Nachos;
 import nachos.kernel.threads.Semaphore;
 import nachos.machine.CPU;
 import nachos.machine.MIPS;
@@ -33,10 +34,20 @@ public class UserThread extends NachosThread {
     public int count = 0;
 
     /**
+     * Used to maintain the max no of quantum ticks permissible at a particular
+     * queue level for any thread. It's updated as the thread is moved to
+     * different levels. Used in Multi feedback implementation.
+     */
+    public int quantumTicksForQueue = Nachos.options.MULTI_FEEDBACK_QUANTUM;
+
+    /**
      * Used to keep a count of ticks in round robin scheduling. Initializing
      * with 1.
      */
     public int ticksMultiFeedback = 0;
+
+    // TODO Maintain quantum ticks here for a particular level
+    // gets incremented/updated each time when make ready is called.
 
     /**
      * Used in executing the sleep syscall. We maintain the number of ticks and

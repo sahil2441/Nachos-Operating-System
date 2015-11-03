@@ -169,6 +169,10 @@ public class Nachos implements Runnable {
 	Debug.println('1',
 		"Creating first Thread from Nachos.java and putting on scheduler.");
 
+	// TODO create a class similar to Nachos Thread that has all the
+	// additional
+	// data members that we added in User Thread. Later User Thread will
+	// extend this thread not nachos Thread.
 	NachosThread firstThread = new NachosThread("FirstThread",
 		new Nachos());
 	scheduler = new Scheduler(firstThread);
