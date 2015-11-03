@@ -7,6 +7,7 @@
 package nachos.kernel.devices;
 
 import nachos.Debug;
+import nachos.kernel.Nachos;
 import nachos.kernel.threads.Lock;
 import nachos.kernel.threads.Semaphore;
 import nachos.machine.Console;
@@ -96,9 +97,11 @@ public class ConsoleDriver {
 
     /**
      * Wait for a character to be available from the console and then return the
-     * character.
+     * character. See method prepareOutputBufferForReadSysCall() that is called
+     * with each read syscall and prepares the output buffer
      */
     public char getChar() {
+
 	inputLock.acquire();
 	ensureInputHandler();
 	charAvail.P();
@@ -221,6 +224,10 @@ public class ConsoleDriver {
     }
 
     public void printOuputBufferToConsole(char[] outputBuffer) {
+
+	// initially shift the number of spaces based on the last input line
+	shiftSpacesToLeft(getNUmberOfSpaces(outputBuffer, outputBuffer.length));
+
 	for (int i = 0; i < outputBuffer.length; i++) {
 	    if (outputBuffer[i] == '\n') {
 		// shift some spaces to left
@@ -228,7 +235,9 @@ public class ConsoleDriver {
 	    }
 	    printToConsole(outputBuffer[i]);
 	}
-
+	// terminate the console here
+	Debug.println('+', "ConsoleTest: quitting");
+	Nachos.consoleDriver.stop();
     }
 
     private int getNUmberOfSpaces(char[] outputBuffer, int start) {
@@ -243,6 +252,13 @@ public class ConsoleDriver {
 	return index < 0 ? 0 : index;
     }
 
+    /**
+     * This method is called with each read syscall and prepares the output
+     * buffer for further printing on Nachos Console.
+     * 
+     * @param size
+     * @return
+     */
     public char[] prepareOutputBufferForReadSysCall(int size) {
 	char[] outputBuffer = new char[size];
 	int index = 0;
@@ -274,6 +290,9 @@ public class ConsoleDriver {
 		printToConsole(ch);
 		outputBuffer[index] = c1;
 		index--;
+		if (index < 0) {
+		    index++;
+		}
 	    } else if (ch == (char) 21) {
 		// Erase the entire current line and reposition the cursor
 		setCurrentLineToNull(currentLineStartingIndex, index,
@@ -289,9 +308,9 @@ public class ConsoleDriver {
 	return outputBuffer;
     }
 
-    private void printCurrentLine(int currentLineStartingIndex, int index,
+    private void printCurrentLine(int currentLineStartingIndex, int lastIndex,
 	    char[] outputBuffer) {
-	for (int i = currentLineStartingIndex; i < index; i++) {
+	for (int i = currentLineStartingIndex; i < lastIndex; i++) {
 	    printToConsole(outputBuffer[i]);
 	}
 
@@ -321,5 +340,4 @@ public class ConsoleDriver {
 	    printToConsole('\b');
 	}
     }
-
 }
