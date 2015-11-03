@@ -331,6 +331,86 @@ public class Syscall {
 
 	console = Nachos.consoleDriver;
 	int index = 0;
+	char[] outputBuffer = new char[size];
+	int currentLineStartingIndex = 0;
+
+	while (index < size) {
+	    char ch = console.getChar();
+
+	    // process the input char 'ch'
+	    if (ch >= 32 && ch <= 126) {
+		outputBuffer[index] = ch;
+		console.printToConsole(ch);
+		index++;
+	    } else if (ch == '\n' || ch == '\r') {
+		console.printToConsole(ch);
+		if (ch == '\n') {
+		    outputBuffer[index] = '\n';
+		} else {
+		    outputBuffer[index] = '\r';
+		}
+		shiftSpacesToLeft(index - currentLineStartingIndex);
+		currentLineStartingIndex = ++index;
+	    } else if (ch == '\b') {
+		// to implement backspace
+		// go back one position, print one space, again go back one
+		// position
+		char c1 = '\u0000';
+		console.printToConsole(ch);
+		console.printToConsole((char) 32);
+		console.printToConsole(ch);
+		outputBuffer[index] = c1;
+		index--;
+	    } else if (ch == (char) 21) {
+		// Erase the entire current line and reposition the cursor
+		setCurrentLineToNull(currentLineStartingIndex, index,
+			outputBuffer);
+		index -= (index - currentLineStartingIndex);
+		currentLineStartingIndex = index;
+	    } else if (ch == (char) 18) {
+		// Erase the entire line and retype it
+		eraseCurrentLine(index - currentLineStartingIndex);
+		printCurrentLine(currentLineStartingIndex, index, outputBuffer);
+	    }
+	}
+	saveToMainMemory(outputBuffer);
+	return index;
+    }
+
+    private static void printCurrentLine(int currentLineStartingIndex,
+	    int index, char[] outputBuffer) {
+	for (int i = currentLineStartingIndex; i < index; i++) {
+	    console.printToConsole(outputBuffer[i]);
+	}
+
+    }
+
+    private static void setCurrentLineToNull(int currentLineStartingIndex,
+	    int index, char[] outputBuffer) {
+	char c1 = '\u0000';
+	for (int i = currentLineStartingIndex; i < index; i++) {
+	    console.printToConsole('\b');
+	    console.printToConsole((char) 32);
+	    console.printToConsole('\b');
+	    outputBuffer[i] = c1;
+	}
+    }
+
+    private static void eraseCurrentLine(int n) {
+	for (int i = 0; i < n; i++) {
+	    console.printToConsole('\b');
+	    console.printToConsole((char) 32);
+	    console.printToConsole('\b');
+	}
+    }
+
+    private static void shiftSpacesToLeft(int index) {
+	for (int i = 0; i < index; i++) {
+	    console.printToConsole('\b');
+	}
+    }
+
+    private static void saveToMainMemory(char[] outputBuffer) {
 	int virtualAddress = CPU.readRegister(4);
 	int virtualPageNumber = ((virtualAddress >> 7) & 0x1ffffff);
 	int offset = (virtualAddress & 0x7f);
@@ -340,24 +420,10 @@ public class Syscall {
 	int physicalPageNumber = space.pageTable[virtualPageNumber].physicalPage;
 	int physicalPageAddress = ((physicalPageNumber << 7) | offset);
 
-	while (index < size) {
-	    char ch = console.getChar();
-	    console.putChar(ch); // echo it!
-
-	    if (ch == '\n')
-		console.putChar('\r');
-
-	    if (ch == 'q') {
-		break;
-	    }
-	    Machine.mainMemory[physicalPageAddress] = (byte) ch;
+	for (int i = 0; i < outputBuffer.length; i++) {
+	    Machine.mainMemory[physicalPageAddress] = (byte) outputBuffer[i];
 	    physicalPageAddress++;
-	    offset++;
-	    index++;
-	    if (offset > 127) {
-	    }
 	}
-	return index;
     }
 
     /**
@@ -454,10 +520,6 @@ public class Syscall {
 	userThread.noOfTicksRemainingForSleep = sleepingTime;
 	Nachos.scheduler.getSleepThreadList().add(userThread);
 
-	// TODO Remove after testing
-	// add a new thread to ready to run list before calling semaphore.P()
-	// on this
-	// new ThreadTest(1);
 	userThread.semaphore = new Semaphore(
 		userThread.name + "-Semaphore for Sleep", 0);
 	userThread.semaphore.P();

@@ -186,7 +186,7 @@ public class Options {
     public boolean TASK_MANAGER = false;
 
     /** Should we implement the Round Robin Scheduling? */
-    public boolean ROUND_ROBIN = true;
+    public boolean ROUND_ROBIN = false;
 
     /** Should we implement the Multi Feedback Scheduling? */
     public boolean MULTI_FEEDBACK = false;

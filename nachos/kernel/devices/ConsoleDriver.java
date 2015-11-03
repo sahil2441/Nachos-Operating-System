@@ -7,85 +7,96 @@
 package nachos.kernel.devices;
 
 import nachos.Debug;
-import nachos.machine.Console;
-import nachos.machine.InterruptHandler;
 import nachos.kernel.threads.Lock;
 import nachos.kernel.threads.Semaphore;
+import nachos.machine.Console;
+import nachos.machine.InterruptHandler;
 
 /**
- * This class provides for the initialization of the NACHOS console,
- * and gives NACHOS user programs a capability of outputting to the console.
- * This driver does not perform any input or output buffering, so a thread
- * performing output must block waiting for each individual character to be
- * printed, and there are no input-editing (backspace, delete, and the like)
- * performed on input typed at the keyboard.
+ * This class provides for the initialization of the NACHOS console, and gives
+ * NACHOS user programs a capability of outputting to the console. This driver
+ * does not perform any input or output buffering, so a thread performing output
+ * must block waiting for each individual character to be printed, and there are
+ * no input-editing (backspace, delete, and the like) performed on input typed
+ * at the keyboard.
  * 
- * Students will rewrite this into a full-fledged interrupt-driven driver
- * that provides efficient, thread-safe operation, along with echoing and
+ * Students will rewrite this into a full-fledged interrupt-driven driver that
+ * provides efficient, thread-safe operation, along with echoing and
  * input-editing features.
  * 
  * @author Eugene W. Stark
  */
 public class ConsoleDriver {
-    
+
     /** Raw console device. */
     private Console console;
 
     /** Lock used to ensure at most one thread trying to input at a time. */
     private Lock inputLock;
-    
+
     /** Lock used to ensure at most one thread trying to output at a time. */
     private Lock outputLock;
-    
+
     /** Semaphore used to indicate that an input character is available. */
     private Semaphore charAvail = new Semaphore("Console char avail", 0);
-    
-    /** Semaphore used to indicate that output is ready to accept a new character. */
+
+    /**
+     * Semaphore used to indicate that output is ready to accept a new
+     * character.
+     */
     private Semaphore outputDone = new Semaphore("Console output done", 1);
-    
+
     /** Interrupt handler used for console keyboard interrupts. */
     private InterruptHandler inputHandler;
-    
+
     /** Interrupt handler used for console output interrupts. */
     private InterruptHandler outputHandler;
 
     /**
+     * This buffer holds the character to be printed to console till it becomes
+     * full
+     */
+    private char[] buffer;
+
+    /**
      * Initialize the driver and the underlying physical device.
      * 
-     * @param console  The console device to be managed.
+     * @param console
+     *            The console device to be managed.
      */
     public ConsoleDriver(Console console) {
 	inputLock = new Lock("console driver input lock");
 	outputLock = new Lock("console driver output lock");
+	setBuffer(new char[10]);
 	this.console = console;
 	// Delay setting the interrupt handlers until first use.
     }
-    
+
     /**
-     * Create and set the keyboard interrupt handler, if one has not
-     * already been set.
+     * Create and set the keyboard interrupt handler, if one has not already
+     * been set.
      */
     private void ensureInputHandler() {
-	if(inputHandler == null) {
+	if (inputHandler == null) {
 	    inputHandler = new InputHandler();
 	    console.setInputHandler(inputHandler);
 	}
     }
 
     /**
-     * Create and set the output interrupt handler, if one has not
-     * already been set.
+     * Create and set the output interrupt handler, if one has not already been
+     * set.
      */
     private void ensureOutputHandler() {
-	if(outputHandler == null) {
+	if (outputHandler == null) {
 	    outputHandler = new OutputHandler();
 	    console.setOutputHandler(outputHandler);
 	}
     }
 
     /**
-     * Wait for a character to be available from the console and then
-     * return the character.
+     * Wait for a character to be available from the console and then return the
+     * character.
      */
     public char getChar() {
 	inputLock.acquire();
@@ -98,26 +109,60 @@ public class ConsoleDriver {
     }
 
     /**
-     * Print a single character on the console.  If the console is already
-     * busy outputting a character, then wait for it to finish before
-     * attempting to output the new character.  A lock is employed to ensure
-     * that at most one thread at a time will attempt to print.
+     * Print a single character on the console. If the console is already busy
+     * outputting a character, then wait for it to finish before attempting to
+     * output the new character. A lock is employed to ensure that at most one
+     * thread at a time will attempt to print.
      *
-     * @param ch The character to be printed.
+     * @param ch
+     *            The character to be printed.
      */
     public void putChar(char ch) {
+
+	int index = getIndexOfBuffer();
+	if (index == buffer.length) {
+	    // buffer is full. Print the characters and then insert the given
+	    // char 'ch'
+	    printBufferToConsole();
+	}
+	// now insert char into buffer
+	buffer[getIndexOfBuffer()] = ch;
+    }
+
+    private void printBufferToConsole() {
 	outputLock.acquire();
 	ensureOutputHandler();
 	outputDone.P();
 	Debug.ASSERT(!console.isOutputBusy());
-	console.putChar(ch);
+
+	// print char at index=0 and shift rest
+	int i = 0;
+	char c1 = '\u0000';
+	console.putChar(buffer[i]);
+
+	while (i < buffer.length - 1) {
+	    buffer[i] = buffer[i + 1];
+	    i++;
+	}
+	buffer[i] = c1;
 	outputLock.release();
     }
 
+    private int getIndexOfBuffer() {
+	int i = 0;
+	char c1 = '\u0000';
+	while (i < buffer.length) {
+	    if (buffer[i] == c1) {
+		return i;
+	    }
+	    i++;
+	}
+	return i;
+    }
+
     /**
-     * Stop the console device.
-     * This removes the interrupt handlers, which otherwise prevent the
-     * Nachos simulation from terminating automatically.
+     * Stop the console device. This removes the interrupt handlers, which
+     * otherwise prevent the Nachos simulation from terminating automatically.
      */
     public void stop() {
 	inputLock.acquire();
@@ -127,28 +172,51 @@ public class ConsoleDriver {
 	console.setOutputHandler(null);
 	outputLock.release();
     }
-    
+
+    public char[] getBuffer() {
+	return buffer;
+    }
+
+    public void setBuffer(char[] buffer) {
+	this.buffer = buffer;
+    }
+
     /**
      * Interrupt handler for the input (keyboard) half of the console.
      */
     private class InputHandler implements InterruptHandler {
-	
+
 	@Override
 	public void handleInterrupt() {
 	    charAvail.V();
 	}
-	
+
     }
-    
+
     /**
      * Interrupt handler for the output (screen) half of the console.
      */
     private class OutputHandler implements InterruptHandler {
-	
+
 	@Override
 	public void handleInterrupt() {
 	    outputDone.V();
 	}
- 	
+
+    }
+
+    /**
+     * This method print the entire line to console whenever \n or \r is
+     * pressed.
+     * 
+     * @param currentLineStartingIndex
+     */
+    public void printToConsole(char ch) {
+	outputLock.acquire();
+	ensureOutputHandler();
+	outputDone.P();
+	Debug.ASSERT(!console.isOutputBusy());
+	console.putChar(ch);
+	outputLock.release();
     }
 }
