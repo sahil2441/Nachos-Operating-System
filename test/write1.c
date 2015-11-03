@@ -5,11 +5,9 @@
 int main()
 {
   OpenFileId fd;
-  char *buf = "A buffer.";
+  char *buf = "Sahi jain Stony Brook University";
 
   fd = Open("create-test");
-  Write(buf, 5, fd);
-  Write(buf, 9, fd);
-  Close(fd);
+  Write(buf, 15, fd);
 }
 

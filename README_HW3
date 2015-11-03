@@ -110,19 +110,43 @@ MAJOR CHANGES MADE:
 
 	-Console Device Driver
 	
-	The method
-	nachos.kernel.userprog.Syscall.read(byte[], int, int)
-	has been modified to satisfy all the requirements mentioned in the problem.
-	Enter this inti run arguments
-	-d -ncpu 1 -x test/read1
+	I've added a new method
+	nachos.kernel.devices.ConsoleDriver.prepareOutputBufferForReadSysCall(int)
+	which is called by the sysCall read() to read from the Nachos Console. This method makes all the 
+	checks on the input character 'ch' that's recieved from the Nachos Console. The above method calls
+	nachos.kernel.devices.ConsoleDriver.getChar()
+	
+	to receive the input character 'ch'.
+	After performing the checks the method prepares the buffer
+	nachos.kernel.devices.ConsoleDriver.prepareOutputBufferForReadSysCall(int).outputBuffer
+	
+	and returns it to syscall read(), which then calls 
+	nachos.kernel.devices.ConsoleDriver.printOuputBufferToConsole(char[])
+	
+	to print the output on Nachos Console. 
+	
+	To test the program:
+	Enter these run arguments
+	-d -x test/read_test
 	and test the program.
+	
+	############
 	
 	Also in case of write sys call where putChar in used, the method:
 	nachos.kernel.devices.ConsoleDriver.putChar(char)
 	has been modified accordingly.
 	The buffer
 	nachos.kernel.devices.ConsoleDriver.buffer
+	
 	holds the characters until the buffer(of size 10) gets full.
+	If the buffer is filled with <= 9 characters it returns without printing anything
+	on the Nachos Console. 
+	Else it prints one character and enters the next char into the buffer.
+	
+	To test the program:
+	Enter these run arguments
+	-d -x test/write_test
+	and test the program.
 	
 	
 

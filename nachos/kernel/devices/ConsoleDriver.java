@@ -98,7 +98,7 @@ public class ConsoleDriver {
     /**
      * Wait for a character to be available from the console and then return the
      * character. See method prepareOutputBufferForReadSysCall() that is called
-     * with each read syscall and prepares the output buffer
+     * with each read syscall and prepares the output buffer.
      */
     public char getChar() {
 
@@ -235,7 +235,10 @@ public class ConsoleDriver {
 	    }
 	    printToConsole(outputBuffer[i]);
 	}
+
 	// terminate the console here
+	// comment these lines to hold the Nachos Console after executing read
+	// syscall
 	Debug.println('+', "ConsoleTest: quitting");
 	Nachos.consoleDriver.stop();
     }
