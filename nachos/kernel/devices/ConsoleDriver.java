@@ -219,4 +219,107 @@ public class ConsoleDriver {
 	console.putChar(ch);
 	outputLock.release();
     }
+
+    public void printOuputBufferToConsole(char[] outputBuffer) {
+	for (int i = 0; i < outputBuffer.length; i++) {
+	    if (outputBuffer[i] == '\n') {
+		// shift some spaces to left
+		shiftSpacesToLeft(getNUmberOfSpaces(outputBuffer, i));
+	    }
+	    printToConsole(outputBuffer[i]);
+	}
+
+    }
+
+    private int getNUmberOfSpaces(char[] outputBuffer, int start) {
+	int index = start - 1;
+	while (index >= 0) {
+	    if (index == 0 || outputBuffer[index] == '\n'
+		    || outputBuffer[index] == '\r') {
+		return start - index;
+	    }
+	    index--;
+	}
+	return index < 0 ? 0 : index;
+    }
+
+    public char[] prepareOutputBufferForReadSysCall(int size) {
+	char[] outputBuffer = new char[size];
+	int index = 0;
+	int currentLineStartingIndex = 0;
+	while (index < size) {
+	    char ch = getChar();
+
+	    // process the input char 'ch'
+	    if (ch >= 32 && ch <= 126) {
+		outputBuffer[index] = ch;
+		printToConsole(ch);
+		index++;
+	    } else if (ch == '\n' || ch == '\r') {
+		printToConsole(ch);
+		if (ch == '\n') {
+		    outputBuffer[index] = '\n';
+		} else {
+		    outputBuffer[index] = '\r';
+		}
+		shiftSpacesToLeft(index - currentLineStartingIndex);
+		currentLineStartingIndex = ++index;
+	    } else if (ch == '\b') {
+		// to implement backspace
+		// go back one position, print one space, again go back one
+		// position
+		char c1 = '\u0000';
+		printToConsole(ch);
+		printToConsole((char) 32);
+		printToConsole(ch);
+		outputBuffer[index] = c1;
+		index--;
+	    } else if (ch == (char) 21) {
+		// Erase the entire current line and reposition the cursor
+		setCurrentLineToNull(currentLineStartingIndex, index,
+			outputBuffer);
+		index -= (index - currentLineStartingIndex);
+		currentLineStartingIndex = index;
+	    } else if (ch == (char) 18) {
+		// Erase the entire line and retype it
+		eraseCurrentLine(index - currentLineStartingIndex);
+		printCurrentLine(currentLineStartingIndex, index, outputBuffer);
+	    }
+	}
+	return outputBuffer;
+    }
+
+    private void printCurrentLine(int currentLineStartingIndex, int index,
+	    char[] outputBuffer) {
+	for (int i = currentLineStartingIndex; i < index; i++) {
+	    printToConsole(outputBuffer[i]);
+	}
+
+    }
+
+    private void setCurrentLineToNull(int currentLineStartingIndex, int index,
+	    char[] outputBuffer) {
+	char c1 = '\u0000';
+	for (int i = currentLineStartingIndex; i < index; i++) {
+	    printToConsole('\b');
+	    printToConsole((char) 32);
+	    printToConsole('\b');
+	    outputBuffer[i] = c1;
+	}
+    }
+
+    private void eraseCurrentLine(int n) {
+	for (int i = 0; i < n; i++) {
+	    printToConsole('\b');
+	    printToConsole((char) 32);
+	    printToConsole('\b');
+	}
+    }
+
+    private void shiftSpacesToLeft(int index) {
+	for (int i = 0; i < index; i++) {
+	    printToConsole('\b');
+	}
+    }
+
 }

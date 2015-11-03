@@ -110,6 +110,21 @@ MAJOR CHANGES MADE:
 
 	-Console Device Driver
 	
+	The method
+	nachos.kernel.userprog.Syscall.read(byte[], int, int)
+	has been modified to satisfy all the requirements mentioned in the problem.
+	Enter this inti run arguments
+	-d -ncpu 1 -x test/read1
+	and test the program.
+	
+	Also in case of write sys call where putChar in used, the method:
+	nachos.kernel.devices.ConsoleDriver.putChar(char)
+	has been modified accordingly.
+	The buffer
+	nachos.kernel.devices.ConsoleDriver.buffer
+	holds the characters until the buffer(of size 10) gets full.
+	
+	
 
 	
 	

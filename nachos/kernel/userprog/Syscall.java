@@ -331,83 +331,15 @@ public class Syscall {
 
 	console = Nachos.consoleDriver;
 	int index = 0;
-	char[] outputBuffer = new char[size];
-	int currentLineStartingIndex = 0;
+	char[] outputBuffer = console.prepareOutputBufferForReadSysCall(size);
 
-	while (index < size) {
-	    char ch = console.getChar();
+	// Print the output buffer to console
+	console.printToConsole('\n');
+	console.printOuputBufferToConsole(outputBuffer);
 
-	    // process the input char 'ch'
-	    if (ch >= 32 && ch <= 126) {
-		outputBuffer[index] = ch;
-		console.printToConsole(ch);
-		index++;
-	    } else if (ch == '\n' || ch == '\r') {
-		console.printToConsole(ch);
-		if (ch == '\n') {
-		    outputBuffer[index] = '\n';
-		} else {
-		    outputBuffer[index] = '\r';
-		}
-		shiftSpacesToLeft(index - currentLineStartingIndex);
-		currentLineStartingIndex = ++index;
-	    } else if (ch == '\b') {
-		// to implement backspace
-		// go back one position, print one space, again go back one
-		// position
-		char c1 = '\u0000';
-		console.printToConsole(ch);
-		console.printToConsole((char) 32);
-		console.printToConsole(ch);
-		outputBuffer[index] = c1;
-		index--;
-	    } else if (ch == (char) 21) {
-		// Erase the entire current line and reposition the cursor
-		setCurrentLineToNull(currentLineStartingIndex, index,
-			outputBuffer);
-		index -= (index - currentLineStartingIndex);
-		currentLineStartingIndex = index;
-	    } else if (ch == (char) 18) {
-		// Erase the entire line and retype it
-		eraseCurrentLine(index - currentLineStartingIndex);
-		printCurrentLine(currentLineStartingIndex, index, outputBuffer);
-	    }
-	}
+	// save buffer to main memory
 	saveToMainMemory(outputBuffer);
 	return index;
-    }
-
-    private static void printCurrentLine(int currentLineStartingIndex,
-	    int index, char[] outputBuffer) {
-	for (int i = currentLineStartingIndex; i < index; i++) {
-	    console.printToConsole(outputBuffer[i]);
-	}
-
-    }
-
-    private static void setCurrentLineToNull(int currentLineStartingIndex,
-	    int index, char[] outputBuffer) {
-	char c1 = '\u0000';
-	for (int i = currentLineStartingIndex; i < index; i++) {
-	    console.printToConsole('\b');
-	    console.printToConsole((char) 32);
-	    console.printToConsole('\b');
-	    outputBuffer[i] = c1;
-	}
-    }
-
-    private static void eraseCurrentLine(int n) {
-	for (int i = 0; i < n; i++) {
-	    console.printToConsole('\b');
-	    console.printToConsole((char) 32);
-	    console.printToConsole('\b');
-	}
-    }
-
-    private static void shiftSpacesToLeft(int index) {
-	for (int i = 0; i < index; i++) {
-	    console.printToConsole('\b');
-	}
     }
 
     private static void saveToMainMemory(char[] outputBuffer) {
