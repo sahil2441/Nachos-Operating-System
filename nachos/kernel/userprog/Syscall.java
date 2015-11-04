@@ -449,6 +449,16 @@ public class Syscall {
 
     public static void sleep(int sleepingTime) {
 	UserThread userThread = ((UserThread) NachosThread.currentThread());
+
+	// check if this thread is owned by any CPU. If yes disown it and update
+	// the map accordingly-- putting current thread on current CPU.
+	for (int i = 0; i < Machine.NUM_CPUS; i++) {
+	    CPU cpu = Machine.getCPU(i);
+	    if (Nachos.scheduler.cpuThreadMap.get(cpu) == userThread) {
+		Nachos.scheduler.cpuThreadMap.put(cpu, null);
+		break;
+	    }
+	}
 	userThread.noOfTicksRemainingForSleep = sleepingTime;
 	Nachos.scheduler.getSleepThreadList().add(userThread);
 
@@ -458,7 +468,7 @@ public class Syscall {
     }
 
     /**
-     * Print system call Prints to console -- for debuggin purposes
+     * Print system call Prints to console -- for debugging purposes
      */
     public static void print() {
 	System.out.println(NachosThread.currentThread().name);

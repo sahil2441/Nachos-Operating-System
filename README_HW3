@@ -38,20 +38,24 @@ MAJOR CHANGES MADE:
 	
 	Enter the following in the run configurations:
 	-d -ps -x test/sleep_test
+	
 	'sleep_test' is a user program to test the Sleep() system call.
 	I've also added a new system call- Print() that prints the name of the thread in 
 	the main console(not Nachos console).
-	In sleep_test we call Print() once before putting pur system on sleep for x number of ticks
+	
+	In sleep_test we call Print() once before putting our system on sleep for x number of ticks
 	and then again after the syscall Sleep().
 	I've used semaphore in the method 
 	nachos.kernel.userprog.Syscall.sleep(int)
+	
 	to implement sleep() syscall. The semaphore in a particular user thread is called with semaphore.P() 
 	and again semaphore.V() is called in the method
 	nachos.kernel.threads.Scheduler.decrementTicksForEachThread()
+	
 	PLease note that since our method
 	nachos.kernel.threads.Scheduler.TimerInterruptHandler.handleInterrupt()
 	is called on the CPU ticks that are multiple of hundred, our sleep syscall will not work as expected if
-	we give some arbitrary amount of ticks for thread to sleep other than a multiple of hundred.  
+	we give some arbitrary amount of ticks for thread to sleep other than a multiple of hundred.
 
 ##########################################################
 

@@ -10,7 +10,4 @@ int main()
 	Print();
 	Sleep(1000);
 	Print();
-	Sleep(2000);
-	Print();
-	
 }

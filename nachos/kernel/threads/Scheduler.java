@@ -324,6 +324,12 @@ public class Scheduler {
 	NachosThread currentThread = NachosThread.currentThread();
 	NachosThread nextThread = findNextToRun();
 
+	// handle for multiple CPU in sleep sys call
+	// This gets called whenever semaphore.P is called
+	if (status == NachosThread.BLOCKED) {
+	    cpuThreadMap.put(currentCPU, (UserThread) currentThread);
+	}
+
 	// If the current thread wants to keep running and there is no other
 	// thread to run,
 	// do nothing.
@@ -387,7 +393,6 @@ public class Scheduler {
 			currentThread.setStatus(status);
 		}
 	    }
-
 	    CPU.switchTo(nextThread, mutex);
 
 	} else {
@@ -605,16 +610,16 @@ public class Scheduler {
 	    // if the interrupted thread called yield at the point it is
 	    // was interrupted.
 
-	    // for Sleep syscall
-	    // this method is useful only if the list of sleeping threads is not
-	    // empty
-	    decrementTicksForEachThread();
-
 	    // get current thread from map
 	    CPU currentCPU = CPU.currentCPU();
 	    UserThread userThread = (UserThread) Nachos.scheduler.cpuThreadMap
 		    .get(currentCPU);
 	    String threadName = userThread == null ? "null" : userThread.name;
+
+	    // for Sleep syscall
+	    // this method is useful only if the list of sleeping threads is not
+	    // empty
+	    decrementTicksForEachThread(currentCPU, userThread);
 
 	    // handling of threads as per the case
 	    if (Nachos.options.MULTI_FEEDBACK) {
@@ -639,9 +644,10 @@ public class Scheduler {
 	 * current handler returns.
 	 */
 	private void yieldOnReturn() {
-	    Debug.println('+',
-		    "Inside method: nachos.kernel.threads.Scheduler.TimerInterruptHandler.yieldOnReturn()");
-	    Debug.println('i', "Yield on interrupt return requested");
+	    // Debug.println('+',
+	    // "Inside method:
+	    // nachos.kernel.threads.Scheduler.TimerInterruptHandler.yieldOnReturn()");
+	    // Debug.println('i', "Yield on interrupt return requested");
 	    CPU.setOnInterruptReturn(new Runnable() {
 		public void run() {
 		    if (NachosThread.currentThread() != null) {
@@ -721,18 +727,36 @@ public class Scheduler {
      * Called every time the method {@link Scheduler.TimerInterruptHandler}} is
      * called by timer. That means that this method is called every 100 ticks.
      * Used in implementation of sleep.
+     * 
+     * @param currentThread
+     * @param currentCPU
      */
 
-    public static void decrementTicksForEachThread() {
+    public static void decrementTicksForEachThread(CPU currentCPU,
+	    UserThread currentThread) {
+
 	List<UserThread> list = Nachos.scheduler.getSleepThreadList();
 	for (int i = 0; i < list.size(); i++) {
 	    UserThread thread = (UserThread) list.get(i);
-
 	    // since handleInterrupt is called after every 100 ticks
-	    thread.noOfTicksRemainingForSleep -= 100;
-	    if (thread.noOfTicksRemainingForSleep < 0) {
+	    // decrement only if the current CPU owns the current thread
+	    if (currentThread == thread) {
+		Debug.println('+',
+			"Ticks remaining with current thread: " + thread.name
+				+ ", " + thread.noOfTicksRemainingForSleep);
+		Debug.println('+',
+			"Decreasing 100 ticks for thread: " + thread.name);
+
+		thread.noOfTicksRemainingForSleep -= 100;
+		Debug.println('+',
+			"Ticks remaining with current thread: " + thread.name
+				+ ", " + thread.noOfTicksRemainingForSleep);
+	    }
+	    if (thread.noOfTicksRemainingForSleep <= 0) {
 		thread.semaphore.V();
-		list.remove(i);
+		if (list.size() > 0) {
+		    list.remove(i);
+		}
 	    }
 	}
 
