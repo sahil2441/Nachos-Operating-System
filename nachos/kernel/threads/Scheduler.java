@@ -331,7 +331,7 @@ public class Scheduler {
 	}
 
 	// update map for Round Robin
-	if (Nachos.options.ROUND_ROBIN) {
+	if (Nachos.options.ROUND_ROBIN && Machine.NUM_CPUS > 1) {
 	    if (status == NachosThread.FINISHED) {
 		for (int i = 0; i < Machine.NUM_CPUS; i++) {
 		    CPU cpu = Machine.getCPU(i);
@@ -666,7 +666,7 @@ public class Scheduler {
 
 		handleInterruptForMultiFeedback(userThread);
 	    } else if (Nachos.options.ROUND_ROBIN) {
-		handleInterruptForRoundRobin(userThread);
+		handleInterruptForRoundRobin();
 	    } else {
 		yieldOnReturn();
 	    }
@@ -703,26 +703,32 @@ public class Scheduler {
 	/**
 	 * Modified version of above method yieldOnReturn() for Round Robin
 	 * Scheduling.
-	 * 
-	 * @param userThread
 	 */
-	private void handleInterruptForRoundRobin(UserThread userThread) {
-	    if (userThread != null) {
-		// Increment count every time by 100
-		userThread.count += 100;
-		if (userThread.count
-			% Nachos.options.ROUND_ROBIN_QUANTUM == 0) {
-		    Debug.println('+',
-			    "Count for this thread: " + userThread.name
-				    + " has reached : " + userThread.count);
-		    Debug.println('+', "Yielding current thread: "
-			    + userThread.name + " on interrupt return");
-		    yieldOnReturn();
+	private void handleInterruptForRoundRobin() {
+	    Debug.println('i', "Yield on interrupt return requested");
+	    CPU.setOnInterruptReturn(new Runnable() {
+		public void run() {
+		    if (NachosThread.currentThread() != null) {
+			UserThread userThread = (UserThread) NachosThread
+				.currentThread();
+			// Increment count every time by 100
+			userThread.count += 100;
+			if (userThread.count
+				% Nachos.options.ROUND_ROBIN_QUANTUM == 0) {
+			    Debug.println('+',
+				    "Count for this thread: " + userThread.name
+					    + " has reached : "
+					    + userThread.count);
+			    Debug.println('+', "Yielding current thread: "
+				    + userThread.name + " on interrupt return");
+			    Nachos.scheduler.yieldThread();
+			}
+		    } else {
+			Debug.println('i',
+				"No current thread on interrupt return, skipping yield");
+		    }
 		}
-	    } else {
-		Debug.println('i',
-			"No current thread on interrupt return, skipping yield");
-	    }
+	    });
 	}
 
 	/**
