@@ -6,7 +6,7 @@
 
 MAJOR CHANGES MADE:
 	—Round Robin Scheduling —Added a new method 
-	nachos.kernel.threads.Scheduler.TimerInterruptHandler.yieldOnReturnRoundRobin()
+	nachos.kernel.threads.Scheduler.handleInterruptForRoundRobin()
 	so that it now yields a thread at a quantum time of 1000 ticks.
 	
 	—Sleep System Call:
@@ -17,7 +17,7 @@ MAJOR CHANGES MADE:
 	
 	-Multi Level Feedback Scheduling
 	Added a new method
-	nachos.kernel.threads.Scheduler.TimerInterruptHandler.yieldOnReturnMultiFeedback()
+	nachos.kernel.threads.Scheduler.TimerInterruptHandler.handleInterruptForMultiFeedback(UserThread)
 	This method is called on every 100th tick of CP if this flag is set true
 	nachos.Options.MULTI_FEEDBACK
 	The method checks if the 
@@ -111,7 +111,13 @@ MAJOR CHANGES MADE:
 ##########################################################
 
 	-Testing the Scheduler
+	The user program 
+	testing_the_scheduler.c
+	test the scheduler to compare the performance of Round Robin and Multi Feedback.
 	
+	To compare the performance by the above user program, enter the following in the run arguments:
+	-d -ps -x test/testing_the_scheduler
+		
 ##########################################################
 
 	-Console Device Driver

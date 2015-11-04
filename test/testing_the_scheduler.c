@@ -5,8 +5,13 @@
 
 int main()
 {
-	//start multiple exec and play ping pong
-	Exec("exec1");
-	Exec("exec2");
-	Exec("exec3");
+	int i, j;
+
+	//use two loops
+	  for(i=0;i<10;i++) {
+		for(j=0; j < 100; j++){
+			Print();
+			}
+		Sleep(10);
+  		}	
 }
