@@ -99,7 +99,7 @@ MAJOR CHANGES MADE:
 	
 	The user program multi_feedback_test creates three User Threads that run for different number of Ticks.
 	The method 
-	nachos.kernel.threads.Scheduler.TimerInterruptHandler.yieldOnReturnMultiFeedback()
+	nachos.kernel.threads.Scheduler.TimerInterruptHandler.handleInterruptForMultiFeedback(UserThread)
 	is called every 100 ticks and checks whether the current thread has exceeded the quantum ticks
 	for that particular queue. If yes, it moves this thread to the next queue. 
 	
