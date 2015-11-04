@@ -330,6 +330,44 @@ public class Scheduler {
 	    cpuThreadMap.put(currentCPU, (UserThread) currentThread);
 	}
 
+	// update map for Round Robin
+	if (Nachos.options.ROUND_ROBIN) {
+	    if (status == NachosThread.FINISHED) {
+		for (int i = 0; i < Machine.NUM_CPUS; i++) {
+		    CPU cpu = Machine.getCPU(i);
+		    if (Nachos.scheduler.cpuThreadMap
+			    .get(cpu) == currentThread) {
+			Nachos.scheduler.cpuThreadMap.put(cpu, null);
+			break;
+		    }
+		}
+	    }
+
+	    // check if next thread is contained in any of the maps
+	    // if not insert
+
+	    if (nextThread != null) {
+		boolean flag = false;
+		for (int i = 0; i < Machine.NUM_CPUS; i++) {
+		    CPU cpu = Machine.getCPU(i);
+		    if (Nachos.scheduler.cpuThreadMap.get(cpu) == nextThread) {
+			flag = true;
+			break;
+		    }
+		}
+		if (!flag) {
+		    for (int i = 0; i < Machine.NUM_CPUS; i++) {
+			CPU cpu = Machine.getCPU(i);
+			if (Nachos.scheduler.cpuThreadMap.get(cpu) == null) {
+			    Nachos.scheduler.cpuThreadMap.put(cpu,
+				    (UserThread) nextThread);
+			    break;
+			}
+		    }
+		}
+	    }
+	}
+
 	// If the current thread wants to keep running and there is no other
 	// thread to run,
 	// do nothing.
@@ -628,7 +666,7 @@ public class Scheduler {
 
 		handleInterruptForMultiFeedback(userThread);
 	    } else if (Nachos.options.ROUND_ROBIN) {
-		yieldOnReturnRoundRobin();
+		handleInterruptForRoundRobin(userThread);
 	    } else {
 		yieldOnReturn();
 	    }
@@ -665,32 +703,26 @@ public class Scheduler {
 	/**
 	 * Modified version of above method yieldOnReturn() for Round Robin
 	 * Scheduling.
+	 * 
+	 * @param userThread
 	 */
-	private void yieldOnReturnRoundRobin() {
-	    Debug.println('i', "Yield on interrupt return requested");
-	    CPU.setOnInterruptReturn(new Runnable() {
-		public void run() {
-		    if (NachosThread.currentThread() != null) {
-			UserThread userThread = (UserThread) NachosThread
-				.currentThread();
-			// Increment count every time by 100
-			userThread.count += 100;
-			if (userThread.count
-				% Nachos.options.ROUND_ROBIN_QUANTUM == 0) {
-			    Debug.println('+',
-				    "Count for this thread: " + userThread.name
-					    + " has reached : "
-					    + userThread.count);
-			    Debug.println('+', "Yielding current thread: "
-				    + userThread.name + " on interrupt return");
-			    Nachos.scheduler.yieldThread();
-			}
-		    } else {
-			Debug.println('i',
-				"No current thread on interrupt return, skipping yield");
-		    }
+	private void handleInterruptForRoundRobin(UserThread userThread) {
+	    if (userThread != null) {
+		// Increment count every time by 100
+		userThread.count += 100;
+		if (userThread.count
+			% Nachos.options.ROUND_ROBIN_QUANTUM == 0) {
+		    Debug.println('+',
+			    "Count for this thread: " + userThread.name
+				    + " has reached : " + userThread.count);
+		    Debug.println('+', "Yielding current thread: "
+			    + userThread.name + " on interrupt return");
+		    yieldOnReturn();
 		}
-	    });
+	    } else {
+		Debug.println('i',
+			"No current thread on interrupt return, skipping yield");
+	    }
 	}
 
 	/**
@@ -721,6 +753,7 @@ public class Scheduler {
 		}
 	    }
 	}
+
     }
 
     /**
