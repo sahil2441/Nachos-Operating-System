@@ -188,9 +188,59 @@ public class ConsoleDriver {
      * Interrupt handler for the input (keyboard) half of the console.
      */
     private class InputHandler implements InterruptHandler {
+	int size = 10;
+
+	char[] outputBuffer = new char[size];
+
+	int index = 10;
+
+	int currentLineStartingIndex = 0;
 
 	@Override
 	public void handleInterrupt() {
+	    while (index < size) {
+		char ch = getChar();
+
+		// process the input char 'ch'
+		if (ch >= 32 && ch <= 126) {
+		    outputBuffer[index] = ch;
+		    printToConsole(ch);
+		    index++;
+		} else if (ch == '\n' || ch == '\r') {
+		    printToConsole(ch);
+		    if (ch == '\n') {
+			outputBuffer[index] = '\n';
+		    } else {
+			outputBuffer[index] = '\r';
+		    }
+		    shiftSpacesToLeft(index - currentLineStartingIndex);
+		    currentLineStartingIndex = ++index;
+		} else if (ch == '\b') {
+		    // to implement backspace
+		    // go back one position, print one space, again go back one
+		    // position
+		    char c1 = '\u0000';
+		    printToConsole(ch);
+		    printToConsole((char) 32);
+		    printToConsole(ch);
+		    outputBuffer[index] = c1;
+		    index--;
+		    if (index < 0) {
+			index++;
+		    }
+		} else if (ch == (char) 21) {
+		    // Erase the entire current line and reposition the cursor
+		    setCurrentLineToNull(currentLineStartingIndex, index,
+			    outputBuffer);
+		    index -= (index - currentLineStartingIndex);
+		    currentLineStartingIndex = index;
+		} else if (ch == (char) 18) {
+		    // Erase the entire line and retype it
+		    eraseCurrentLine(index - currentLineStartingIndex);
+		    printCurrentLine(currentLineStartingIndex, index,
+			    outputBuffer);
+		}
+	    }
 	    charAvail.V();
 	}
 
@@ -241,18 +291,6 @@ public class ConsoleDriver {
 	// syscall
 	Debug.println('+', "ConsoleTest: quitting");
 	Nachos.consoleDriver.stop();
-    }
-
-    private int getNUmberOfSpaces(char[] outputBuffer, int start) {
-	int index = start - 1;
-	while (index >= 0) {
-	    if (index == 0 || outputBuffer[index] == '\n'
-		    || outputBuffer[index] == '\r') {
-		return start - index;
-	    }
-	    index--;
-	}
-	return index < 0 ? 0 : index;
     }
 
     /**
@@ -310,6 +348,26 @@ public class ConsoleDriver {
 	}
 	return outputBuffer;
     }
+
+    private int getNUmberOfSpaces(char[] outputBuffer, int start) {
+	int index = start - 1;
+	while (index >= 0) {
+	    if (index == 0 || outputBuffer[index] == '\n'
+		    || outputBuffer[index] == '\r') {
+		return start - index;
+	    }
+	    index--;
+	}
+	return index < 0 ? 0 : index;
+    }
+
+    /**
+     * This method is called with each read syscall and prepares the output
+     * buffer for further printing on Nachos Console.
+     * 
+     * @param size
+     * @return
+     */
 
     private void printCurrentLine(int currentLineStartingIndex, int lastIndex,
 	    char[] outputBuffer) {

@@ -330,7 +330,6 @@ public class Syscall {
 		"ConsoleTest: starting. Entered method nachos.kernel.userprog.Syscall.read(byte[], int, int)");
 
 	console = Nachos.consoleDriver;
-	int index = 0;
 	char[] outputBuffer = console.prepareOutputBufferForReadSysCall(size);
 
 	// Print the output buffer to console
@@ -339,7 +338,7 @@ public class Syscall {
 
 	// save buffer to main memory
 	saveToMainMemory(outputBuffer);
-	return index;
+	return 0;
     }
 
     private static void saveToMainMemory(char[] outputBuffer) {
