@@ -1,0 +1,167 @@
+##################################################################
+						Sahil Jain
+						110281300
+						sahjain@cs.stonybrook.edu
+##################################################################
+
+MAJOR CHANGES MADE:
+	—Round Robin Scheduling —Added a new method 
+	nachos.kernel.threads.Scheduler.handleInterruptForRoundRobin()
+	so that it now yields a thread at a quantum time of 1000 ticks.
+	
+	—Sleep System Call:
+	Added a new method 
+	nachos.kernel.threads.Scheduler.decrementTicksForEachThread()
+	This method decrements the time left in each thread before it gets added
+	to read to run list.
+	
+	-Multi Level Feedback Scheduling
+	Added a new method
+	nachos.kernel.threads.Scheduler.TimerInterruptHandler.handleInterruptForMultiFeedback(UserThread)
+	This method is called on every 100th tick of CP if this flag is set true
+	nachos.Options.MULTI_FEEDBACK
+	The method checks if the 
+	nachos.kernel.userprog.UserThread.ticksMultiFeedback
+	has exceeded the threshold ticks for the particular queue.
+	If yes then the current thread is moved to the next queue based on the exponential
+	averaging scheme.
+
+##########################################################
+					How to test ?
+##########################################################
+
+	-Sleep
+	
+	Make sure that the following flag are set false:
+	nachos.Options.ROUND_ROBIN
+	nachos.Options.MULTI_FEEDBACK
+	
+	Enter the following in the run configurations:
+	-d -ps -ncpu 2 -x test/sleep_test
+	
+	'sleep_test' is a user program to test the Sleep() system call.
+	I've also added a new system call- Print() that prints the name of the thread in 
+	the main console(not Nachos console).
+	
+	In sleep_test we call Print() once before putting our system on sleep for x number of ticks
+	and then again after the syscall Sleep().
+	I've used semaphore in the method 
+	nachos.kernel.userprog.Syscall.sleep(int)
+	
+	to implement sleep() syscall. The semaphore in a particular user thread is called with semaphore.P() 
+	and again semaphore.V() is called in the method
+	nachos.kernel.threads.Scheduler.decrementTicksForEachThread()
+	
+	PLease note that since our method
+	nachos.kernel.threads.Scheduler.TimerInterruptHandler.handleInterrupt()
+	is called on the CPU ticks that are multiple of hundred, our sleep syscall will not work as expected if
+	we give some arbitrary amount of ticks for thread to sleep other than a multiple of hundred.
+	
+	Sleep can be called with as many CPUs as possible by changing -ncpu in the arguments.
+
+##########################################################
+
+	-Round Robin
+	
+	Set the following flag true
+	nachos.Options.ROUND_ROBIN
+	
+	Set the following in the run arguments
+	-d -ps -x test/round_robin_test
+	
+	This user test program calls exec() syscall three times and starts three threads.
+	Each of them runs for a maximum of quantum time as defined here
+	nachos.Options.ROUND_ROBIN_QUANTUM
+	The three threads runs for a max of ticks equal to quantum time defined in 
+	nachos.Options.ROUND_ROBIN_QUANTUM
+	and plays a kind of ping pong with one another. 
+	Each thread's number of ticks is defined here
+	nachos.kernel.userprog.UserThread.count
+	
+##########################################################
+
+	-Multi Feedback
+	
+	Set the following flag true
+	nachos.Options.MULTI_FEEDBACK
+	
+	and the following false
+	nachos.Options.ROUND_ROBIN
+	
+	Set the following in the run arguments
+	-d -ps -x test/multi_feedback_test
+	
+	The quantum ticks for the first queue(i.e the one with the max priority) is set here and hence configurable
+	nachos.Options.MULTI_FEEDBACK_QUANTUM
+	
+	Number of queues for Multi Feedback is maintained here and hence configurable
+	nachos.Options.NO_OF_QUEUES
+	
+	The user program multi_feedback_test creates three User Threads that run for different number of Ticks.
+	The method 
+	nachos.kernel.threads.Scheduler.TimerInterruptHandler.handleInterruptForMultiFeedback(UserThread)
+	is called every 100 ticks and checks whether the current thread has exceeded the quantum ticks
+	for that particular queue. If yes, it moves this thread to the next queue. 
+	
+	It also calculates the average CPU burst using exponential averaging.
+	nachos.kernel.threads.Scheduler.getQueueNumber().newAverage
+	based on constant p
+	nachos.kernel.threads.Scheduler.p
+	
+##########################################################
+
+	-Testing the Scheduler
+	The user program 
+	testing_the_scheduler.c
+	test the scheduler to compare the performance of Round Robin and Multi Feedback.
+	
+	To compare the performance by the above user program, enter the following in the run arguments:
+	-d -ps -x test/testing_the_scheduler
+		
+##########################################################
+
+	-Console Device Driver
+	
+	I've added a new method
+	nachos.kernel.devices.ConsoleDriver.prepareOutputBufferForReadSysCall(int)
+	which is called by the sysCall read() to read from the Nachos Console. This method makes all the 
+	checks on the input character 'ch' that's recieved from the Nachos Console. The above method calls
+	nachos.kernel.devices.ConsoleDriver.getChar()
+	
+	to receive the input character 'ch'.
+	After performing the checks the method prepares the buffer
+	nachos.kernel.devices.ConsoleDriver.prepareOutputBufferForReadSysCall(int).outputBuffer
+	
+	and returns it to syscall read(), which then calls 
+	nachos.kernel.devices.ConsoleDriver.printOuputBufferToConsole(char[])
+	
+	to print the output on Nachos Console. 
+	
+	To test the program:
+	Enter these run arguments
+	-d -x test/read_test
+	and test the program.
+	
+	############
+	
+	Also in case of write sys call where putChar in used, the method:
+	nachos.kernel.devices.ConsoleDriver.putChar(char)
+	has been modified accordingly.
+	The buffer
+	nachos.kernel.devices.ConsoleDriver.buffer
+	
+	holds the characters until the buffer(of size 10) gets full.
+	If the buffer is filled with <= 9 characters it returns without printing anything
+	on the Nachos Console. 
+	Else it prints one character and enters the next char into the buffer.
+	
+	To test the program:
+	Enter these run arguments
+	-d -x test/write_test
+	and test the program.
+	
+	
+
+	
+	
+
