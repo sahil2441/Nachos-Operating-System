@@ -10,25 +10,23 @@
 package nachos.kernel.filesys;
 
 /**
- * This class class defines a UNIX-like "directory".  Each entry in
- * the directory describes a file, and where to find it on disk.
+ * This class class defines a UNIX-like "directory". Each entry in the directory
+ * describes a file, and where to find it on disk.
  *
- * The directory is a table of fixed length entries; each
- * entry represents a single file, and contains the file name,
- * and the location of the file header on disk.  The fixed size
- * of each directory entry means that we have the restriction
- * of a fixed maximum size for file names.
+ * The directory is a table of fixed length entries; each entry represents a
+ * single file, and contains the file name, and the location of the file header
+ * on disk. The fixed size of each directory entry means that we have the
+ * restriction of a fixed maximum size for file names.
  *
- * Also, this implementation has the restriction that the size
- * of the directory cannot expand.  In other words, once all the
- * entries in the directory are used, no more files can be created.
- * Fixing this is one of the parts to the assignment.
+ * Also, this implementation has the restriction that the size of the directory
+ * cannot expand. In other words, once all the entries in the directory are
+ * used, no more files can be created. Fixing this is one of the parts to the
+ * assignment.
  *
- * The directory data structure can be stored in memory, or on disk.
- * When it is on disk, it is stored as a regular Nachos file.
- * The constructor initializes a directory structure in memory; the
- * fetchFrom/writeBack operations shuffle the directory information
- * from/to disk. 
+ * The directory data structure can be stored in memory, or on disk. When it is
+ * on disk, it is stored as a regular Nachos file. The constructor initializes a
+ * directory structure in memory; the fetchFrom/writeBack operations shuffle the
+ * directory information from/to disk.
  * 
  * We assume mutual exclusion is provided by the caller.
  * 
@@ -48,16 +46,16 @@ class Directory {
     private final FileSystemReal filesystem;
 
     /**
-     * Initialize a directory; initially, the directory is completely
-     * empty.  If the disk is being formatted, an empty directory
-     * is all we need, but otherwise, we need to call FetchFrom in order
-     * to initialize it from disk.
+     * Initialize a directory; initially, the directory is completely empty. If
+     * the disk is being formatted, an empty directory is all we need, but
+     * otherwise, we need to call FetchFrom in order to initialize it from disk.
      *
-     * @param size The number of entries in the directory.
-     * @param filesystem  The underlying filesystem in which this directory exists.
+     * @param size
+     *            The number of entries in the directory.
+     * @param filesystem
+     *            The underlying filesystem in which this directory exists.
      */
-    Directory(int size, FileSystemReal filesystem)
-    {
+    Directory(int size, FileSystemReal filesystem) {
 	this.filesystem = filesystem;
 	table = new DirectoryEntry[size];
 	tableSize = size;
@@ -69,7 +67,8 @@ class Directory {
     /**
      * Read the contents of the directory from disk.
      *
-     * @param file The file containing the directory contents.
+     * @param file
+     *            The file containing the directory contents.
      */
     void fetchFrom(OpenFile file) {
 	byte buffer[] = new byte[tableSize * DirectoryEntry.sizeOf()];
@@ -84,7 +83,8 @@ class Directory {
     /**
      * Write any modifications to the directory back to disk
      *
-     * @param file The file to contain the new directory contents.
+     * @param file
+     *            The file to contain the new directory contents.
      */
     void writeBack(OpenFile file) {
 	byte buffer[] = new byte[tableSize * DirectoryEntry.sizeOf()];
@@ -98,9 +98,10 @@ class Directory {
 
     /**
      * Look up file name in directory, and return its location in the table of
-     * directory entries.  Return -1 if the name isn't in the directory.
+     * directory entries. Return -1 if the name isn't in the directory.
      *
-     * @param name The file name to look up.
+     * @param name
+     *            The file name to look up.
      * @return The index of the entry in the table, if present, otherwise -1.
      */
     private int findIndex(String name) {
@@ -108,17 +109,18 @@ class Directory {
 	    if (table[i].inUse() && name.equals(table[i].getName()))
 		return i;
 	}
-	return -1;		// name not in directory
+	return -1; // name not in directory
     }
 
     /**
-     * Look up file name in directory, and return the disk sector number
-     * where the file's header is stored. Return -1 if the name isn't 
-     * in the directory.
+     * Look up file name in directory, and return the disk sector number where
+     * the file's header is stored. Return -1 if the name isn't in the
+     * directory.
      *
-     * @param name The file name to look up.
-     * @return The disk sector number where the file's header is stored,
-     * if the entry was found, otherwise -1.
+     * @param name
+     *            The file name to look up.
+     * @return The disk sector number where the file's header is stored, if the
+     *         entry was found, otherwise -1.
      */
     int find(String name) {
 	int i = findIndex(name);
@@ -129,42 +131,49 @@ class Directory {
     }
 
     /**
-     * Add a file into the directory.  Return TRUE if successful;
-     * return FALSE if the file name is already in the directory,
-     * or if the directory is completely full, and has no more space for
-     * additional file names, or if the file name cannot be represented
-     * in the number of bytes available in a directory entry.
+     * Add a file into the directory. Return TRUE if successful; return FALSE if
+     * the file name is already in the directory, or if the directory is
+     * completely full, and has no more space for additional file names, or if
+     * the file name cannot be represented in the number of bytes available in a
+     * directory entry.
      *
-     * @param name The name of the file being added.
-     * @param newSector The disk sector containing the added file's header.
+     * @param name
+     *            The name of the file being added.
+     * @param newSector
+     *            The disk sector containing the added file's header.
      * @return true if the file was successfully added, otherwise false.
      */
-    boolean add(String name, int newSector) { 
+    // TODO: Fix when table is full i.e write beyond file size.
+    boolean add(String name, int newSector) {
 	if (findIndex(name) != -1)
 	    return false;
 
-	for (int i = 0; i < tableSize; i++)
+	for (int i = 0; i < tableSize; i++) {
 	    if (!table[i].inUse()) {
-		if(!table[i].setUsed(name, newSector))
-		    return(false);
-		return(true);
+		if (!table[i].setUsed(name, newSector))
+		    return (false);
+		return (true);
 	    }
-	return false;	// no space.  Fix when we have extensible files.
+	}
+
+	// Fix here
+	return false; // no space. Fix when we have extensible files.
     }
 
     /**
-     * Remove a file name from the directory.  Return TRUE if successful;
-     * return FALSE if the file isn't in the directory. 
+     * Remove a file name from the directory. Return TRUE if successful; return
+     * FALSE if the file isn't in the directory.
      *
-     * @param name The file name to be removed.
+     * @param name
+     *            The file name to be removed.
      */
-    boolean remove(String name) { 
+    boolean remove(String name) {
 	int i = findIndex(name);
 
 	if (i == -1)
-	    return false; 		// name not in directory
+	    return false; // name not in directory
 	table[i].setUnused();
-	return true;	
+	return true;
     }
 
     /**
@@ -177,8 +186,8 @@ class Directory {
     }
 
     /**
-     * List all the file names in the directory, their FileHeader locations,
-     * and the contents of each file (for debugging).
+     * List all the file names in the directory, their FileHeader locations, and
+     * the contents of each file (for debugging).
      */
     void print() {
 	FileHeader hdr = new FileHeader(filesystem);
@@ -186,8 +195,8 @@ class Directory {
 	System.out.print("Directory contents: ");
 	for (int i = 0; i < tableSize; i++)
 	    if (table[i].inUse()) {
-		System.out.println("Name " + table[i].getName()
-			+ ", Sector: " + table[i].getSector());
+		System.out.println("Name " + table[i].getName() + ", Sector: "
+			+ table[i].getSector());
 		hdr.fetchFrom(table[i].getSector());
 		hdr.print();
 	    }

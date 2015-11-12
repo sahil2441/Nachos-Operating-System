@@ -75,6 +75,8 @@ public class Syscall {
     /** Integer code identifying the "Print" system call. */
     public static final byte SC_Print = 13;
 
+    // TODO: Add two new syscalls Mkdir & Rmdir
+
     /**
      * Global variable for Process ID
      */

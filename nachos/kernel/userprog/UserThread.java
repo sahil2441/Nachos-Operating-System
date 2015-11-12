@@ -46,9 +46,6 @@ public class UserThread extends NachosThread {
      */
     public int ticksMultiFeedback = 0;
 
-    // TODO Maintain quantum ticks here for a particular level
-    // gets incremented/updated each time when make ready is called.
-
     /**
      * Used in executing the sleep syscall. We maintain the number of ticks and
      * decrememnt each time handleInterrupt is called:

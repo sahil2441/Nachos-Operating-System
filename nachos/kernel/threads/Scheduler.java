@@ -327,7 +327,9 @@ public class Scheduler {
 	// handle for multiple CPU in sleep sys call
 	// This gets called whenever semaphore.P is called
 	if (status == NachosThread.BLOCKED) {
-	    cpuThreadMap.put(currentCPU, (UserThread) currentThread);
+	    if (currentThread instanceof UserThread) {
+		cpuThreadMap.put(currentCPU, (UserThread) currentThread);
+	    }
 	}
 
 	// update map for Round Robin
@@ -412,9 +414,6 @@ public class Scheduler {
 		    if (status != NachosThread.FINISHED)
 			currentThread.setStatus(status);
 		}
-		// in case of multi feedback update the map of cpu and thread.
-		// Only current cpu can schedule a thread on a CPU
-		// put nextThread on an idle CPU that we get from cpuList TODO
 		cpuThreadMap.put(currentCPU, (UserThread) nextThread);
 		dispatchIdleCPUs();
 
