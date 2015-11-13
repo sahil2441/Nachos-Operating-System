@@ -67,8 +67,8 @@ Exec:
 	j	$31
 	.end Exec
 
-	.globl Join
-	.ent	Join
+	.globl Sleep
+	.ent	Sleep
 
 Sleep:
 	addiu $2,$0,SC_Sleep
@@ -76,8 +76,26 @@ Sleep:
 	j	$31
 	.end Sleep
 
-	.globl Sleep
-	.ent	Sleep
+	.globl Mkdir
+	.ent	Mkdir
+
+Mkdir:
+	addiu $2,$0,SC_Mkdir
+	syscall
+	j	$31
+	.end Mkdir
+
+	.globl Rmdir
+	.ent	Rmdir
+	
+Rmdir:
+	addiu $2,$0,SC_Rmdir
+	syscall
+	j	$31
+	.end Rmdir
+
+	.globl Print
+	.ent	Print
 
 Print:
 	addiu $2,$0,SC_Print
@@ -85,8 +103,8 @@ Print:
 	j	$31
 	.end Print
 
-	.globl Print
-	.ent	Print
+	.globl Join
+	.ent	Join
 
 Join:
 	addiu $2,$0,SC_Join

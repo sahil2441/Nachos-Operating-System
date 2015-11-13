@@ -54,6 +54,7 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		physicalPageNumber, len, pid, startIndex;
 	AddrSpace space;
 	byte[] buf;
+	String directoryName;
 
 	if (which == MachineException.SyscallException) {
 	    Debug.println('+',
@@ -172,6 +173,22 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 
 	    case Syscall.SC_Remove:
 		Syscall.remove("");
+		break;
+
+	    case Syscall.SC_Mkdir:
+		// TODO
+		Debug.println('+', "Syscall is : Syscall.SC_Mkdir");
+		startIndex = CPU.readRegister(4);
+		directoryName = obtainExecutableFileName(startIndex);
+		Syscall.makeDirectory(directoryName);
+		break;
+
+	    case Syscall.SC_Rmdir:
+		// TODO
+		Debug.println('+', "Syscall is : Syscall.SC_Rmdir");
+		startIndex = CPU.readRegister(4);
+		directoryName = obtainExecutableFileName(startIndex);
+		Syscall.removeDirectory(directoryName);
 		break;
 	    }
 

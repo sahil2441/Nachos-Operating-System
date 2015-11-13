@@ -32,7 +32,8 @@
 #define SC_Remove	11
 #define SC_Sleep	12
 #define SC_Print	13
-
+#define SC_Mkdir	14
+#define SC_Rmdir	15
 
 #ifndef IN_ASM
 
@@ -141,6 +142,16 @@ void Sleep(int t);
  * Prints to console
  */
 void Print();		
+
+/* 
+ * Creates a directory with the specified string as name.
+ */
+void Mkdir(char* name);		
+
+/* 
+ * Creates a directory with the specified string as name.
+ */
+void Rmdir(char* name);		
 
 #endif /* IN_ASM */
 

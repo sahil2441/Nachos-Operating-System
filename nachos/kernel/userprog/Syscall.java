@@ -11,6 +11,7 @@ import java.util.List;
 import nachos.Debug;
 import nachos.kernel.Nachos;
 import nachos.kernel.devices.ConsoleDriver;
+import nachos.kernel.filesys.FileSystem;
 import nachos.kernel.filesys.OpenFile;
 import nachos.kernel.threads.Semaphore;
 import nachos.machine.CPU;
@@ -75,7 +76,11 @@ public class Syscall {
     /** Integer code identifying the "Print" system call. */
     public static final byte SC_Print = 13;
 
-    // TODO: Add two new syscalls Mkdir & Rmdir
+    /** Integer code identifying the "Make Directory" system call. */
+    public static final byte SC_Mkdir = 14;
+
+    /** Integer code identifying the "Remove Directory" system call. */
+    public static final byte SC_Rmdir = 15;
 
     /**
      * Global variable for Process ID
@@ -473,6 +478,24 @@ public class Syscall {
      */
     public static void print() {
 	System.out.println(NachosThread.currentThread().name);
+    }
+
+    /**
+     * Creates a directory with the name as directoryName Supports the
+     * parenthesis '/'
+     * 
+     * @param directoryName
+     */
+
+    public static void makeDirectory(String directoryName) {
+	// TODO Auto-generated method stub
+
+    }
+
+    public static void removeDirectory(String directoryName) {
+	// TODO Auto-generated method stub
+	FileSystem fileSystem = Nachos.fileSystem;
+
     }
 
 }

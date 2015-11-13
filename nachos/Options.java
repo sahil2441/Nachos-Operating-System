@@ -150,13 +150,13 @@ public class Options {
     /**
      * Should we use the stub filesystem, rather than the Nachos filesystem?
      **/
-    public boolean FILESYS_STUB = false;
+    public boolean FILESYS_STUB = true;
 
     /** Should we use the "real" Nachos filesystem (requires disk)? */
-    public boolean FILESYS_REAL = true;
+    public boolean FILESYS_REAL = false;
 
     /** Should we format the Nachos disk before using it? */
-    public boolean FORMAT_DISK = true;
+    public boolean FORMAT_DISK = false;
 
     // Test/demo configuration options.
 
@@ -173,7 +173,7 @@ public class Options {
     public boolean CONSOLE_TEST = false;
 
     /** Should we run the filesystem test? */
-    public boolean FILESYS_TEST = true;
+    public boolean FILESYS_TEST = false;
 
     /** Should we run the serial port test? */
     public boolean SERIAL_TEST = false;
