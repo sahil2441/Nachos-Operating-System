@@ -46,6 +46,11 @@ class Directory {
     private final FileSystemReal filesystem;
 
     /**
+     * Name of the directory.
+     */
+    private String directoryName;
+
+    /**
      * Initialize a directory; initially, the directory is completely empty. If
      * the disk is being formatted, an empty directory is all we need, but
      * otherwise, we need to call FetchFrom in order to initialize it from disk.
@@ -57,6 +62,25 @@ class Directory {
      */
     Directory(int size, FileSystemReal filesystem) {
 	this.filesystem = filesystem;
+	table = new DirectoryEntry[size];
+	tableSize = size;
+	for (int i = 0; i < tableSize; i++) {
+	    table[i] = new DirectoryEntry();
+	}
+    }
+
+    /**
+     * Another Constructor -- similar to above, it also takes additional
+     * parameter -- name of the directory
+     * 
+     * @param size
+     * @param filesystem
+     * @param name
+     */
+
+    Directory(int size, FileSystemReal filesystem, String name) {
+	this.filesystem = filesystem;
+	this.setDirectoryName(name);
 	table = new DirectoryEntry[size];
 	tableSize = size;
 	for (int i = 0; i < tableSize; i++) {
@@ -143,7 +167,6 @@ class Directory {
      *            The disk sector containing the added file's header.
      * @return true if the file was successfully added, otherwise false.
      */
-    // TODO: Fix when table is full i.e write beyond file size.
     boolean add(String name, int newSector) {
 	if (findIndex(name) != -1)
 	    return false;
@@ -157,7 +180,28 @@ class Directory {
 	}
 
 	// Fix here
-	return false; // no space. Fix when we have extensible files.
+	// create a new array of Directory Entries that is twice in size of
+	// table array and copy everything from first array into second.
+	DirectoryEntry[] newtable = new DirectoryEntry[table.length * 2];
+
+	// copy index at which we need to insert
+	int position = table.length;
+
+	// initialize the directory entry in every entry of array
+	for (int i = 0; i < newtable.length; i++) {
+	    newtable[i] = new DirectoryEntry();
+	}
+
+	// copy entries from previous array
+	for (int i = 0; i < table.length; i++) {
+	    newtable[i] = table[i];
+	}
+	table = newtable;
+
+	if (!table[position].setUsed(name, newSector)) {
+	    return false;
+	}
+	return true;
     }
 
     /**
@@ -201,6 +245,14 @@ class Directory {
 		hdr.print();
 	    }
 	System.out.println("");
+    }
+
+    public String getDirectoryName() {
+	return directoryName;
+    }
+
+    public void setDirectoryName(String directoryName) {
+	this.directoryName = directoryName;
     }
 
 }

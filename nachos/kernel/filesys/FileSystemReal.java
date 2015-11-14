@@ -282,6 +282,7 @@ class FileSystemReal extends FileSystem {
 		}
 	    }
 	}
+	Debug.println('+', "File system creation status: " + success);
 	return success;
     }
 

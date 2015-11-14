@@ -98,6 +98,13 @@ public class Nachos implements Runnable {
 	if (options.FILESYS_STUB || options.FILESYS_REAL)
 	    fileSystem = FileSystem.init(diskDriver);
 
+	// testing
+	for (int i = 0; i < 15; i++) {
+	    String s = "File:" + i;
+	    Debug.println('+', "Creating file :" + i);
+	    fileSystem.create(s, 128);
+	}
+
 	// Do per-CPU initialization: Before we can run user programs,
 	// we need to set an exception handler on each CPU to handle
 	// exceptions (traps) from user mode.

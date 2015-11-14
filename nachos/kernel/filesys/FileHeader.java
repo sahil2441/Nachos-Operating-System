@@ -46,7 +46,6 @@ class FileHeader {
     /** Number of pointers to data blocks stored in a file header. */
     private final int NumDirect;
 
-    // TODO increase size of a file
     /** Maximum file size that can be represented in the baseline system. */
     private final int MaxFileSize;
 
