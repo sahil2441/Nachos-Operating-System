@@ -10,6 +10,9 @@
 
 package nachos.kernel.filesys;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import nachos.Debug;
 import nachos.kernel.devices.DiskDriver;
 
@@ -108,6 +111,12 @@ class FileSystemReal extends FileSystem {
     private final OpenFile directoryFile;
 
     /**
+     * Map of Directories. It's to check which directories we have in our file
+     * system.
+     */
+    private Map<String, Directory> mapOfDirectories;
+
+    /**
      * Initialize the file system. If format = true, the disk has nothing on it,
      * and we need to initialize the disk to contain an empty directory, and a
      * bitmap of free sectors (with almost but not all of the sectors marked as
@@ -129,9 +138,19 @@ class FileSystemReal extends FileSystem {
 	FreeMapFileSize = (numDiskSectors / BitMap.BitsInByte);
 	DirectoryFileSize = (DirectoryEntry.sizeOf() * NumDirEntries);
 
+	// initialize the map
+
 	if (format) {
 	    BitMap freeMap = new BitMap(numDiskSectors);
-	    Directory directory = new Directory(NumDirEntries, this);
+	    // Directory directory = new Directory(NumDirEntries, this);
+	    // passing root as the directory name
+	    Directory rootDirectory = new Directory(NumDirEntries, this, "/");
+
+	    // initialize the map
+	    mapOfDirectories = new HashMap<>();
+	    // add root directory to the map
+	    this.mapOfDirectories.put("/", rootDirectory);
+
 	    FileHeader mapHdr = new FileHeader(this);
 	    FileHeader dirHdr = new FileHeader(this);
 
@@ -175,11 +194,11 @@ class FileSystemReal extends FileSystem {
 
 	    Debug.print('f', "Writing bitmap and directory back to disk.\n");
 	    freeMap.writeBack(freeMapFile); // flush changes to disk
-	    directory.writeBack(directoryFile);
+	    rootDirectory.writeBack(directoryFile);
 
 	    if (Debug.isEnabled('f')) {
 		freeMap.print();
-		directory.print();
+		rootDirectory.print();
 	    }
 
 	} else {
@@ -275,7 +294,7 @@ class FileSystemReal extends FileSystem {
 		    success = false; // no space on disk for data
 		else {
 		    success = true;
-		    // everthing worked, flush all changes back to disk
+		    // everything worked, flush all changes back to disk
 		    hdr.writeBack(sector);
 		    directory.writeBack(directoryFile);
 		    freeMap.writeBack(freeMapFile);
@@ -284,6 +303,140 @@ class FileSystemReal extends FileSystem {
 	}
 	Debug.println('+', "File system creation status: " + success);
 	return success;
+    }
+
+    /**
+     * Creates a new directory with the specified name pathname as the directory
+     * name.
+     */
+    public boolean createDirectory(String pathName) {
+
+	if (pathName == "/")
+	    return false;
+	Directory childDirectory = new Directory(NumDirEntries, this, pathName);
+	allocateSpaceForDirectory(childDirectory);
+
+	// check parent directory if it exists in map
+	// if yes then extract from map and put it in the list
+	int slashCount = getSlashCount(pathName);
+
+	if (slashCount == 1) {
+	    // create a sub directory in the root directory only
+	    if (mapOfDirectories.get("/") != null) {
+		((Directory) mapOfDirectories.get("/")).getDirectories()
+			.add(childDirectory);
+
+		// update the map
+		mapOfDirectories.put(pathName, childDirectory);
+		Debug.println('f', "Created new directory: " + pathName);
+		return true;
+	    } else {
+		// root doesn't exist
+		Debug.println('f', "Root Directory doesn't exist.");
+		return false;
+	    }
+	} else {
+	    // check if parent exists
+	    String parentDirectoryName = pathName.substring(0,
+		    pathName.lastIndexOf('/'));
+	    Directory parentDirectory = mapOfDirectories
+		    .get(parentDirectoryName);
+
+	    if (parentDirectory != null) {
+		// insert new directory(==child) in parent directory
+		parentDirectory.getDirectories().add(childDirectory);
+		Debug.println('f', "Created new directory: " + pathName);
+		return true;
+
+	    } else {
+		// Parent doesn't exist
+		Debug.println('f', "Parent Directory: " + parentDirectoryName
+			+ " doesn't exist.");
+		return false;
+	    }
+
+	}
+    }
+
+    private void allocateSpaceForDirectory(Directory directory) {
+	// TODO Copy the actions for a root directory from the constructor of
+	// this class. We need to allocate space for this new directory as well.
+	// May be ???
+
+    }
+
+    /**
+     * Removes the directory.
+     * 
+     * @return
+     */
+    public boolean removeDirectory(String pathName) {
+	Directory directory = mapOfDirectories.get(pathName);
+	if (directory == null) {
+	    Debug.println('f', "Directory :" + pathName
+		    + " doesn't exist in the File System.");
+	    return false;
+	} else {
+	    // Remove association of parent
+	    // if it's root directory then there's no parent.
+
+	    if (pathName != "/") {
+		int slashCount = getSlashCount(pathName);
+		Directory parentDirectory;
+		if (slashCount == 1) {
+		    parentDirectory = mapOfDirectories.get("/");
+
+		} else {
+		    // Get parent directory
+		    String parentDirectoryName = pathName.substring(0,
+			    pathName.lastIndexOf('/'));
+		    parentDirectory = mapOfDirectories.get(parentDirectoryName);
+
+		}
+		for (int i = 0; i < parentDirectory.getDirectories()
+			.size(); i++) {
+		    if (parentDirectory.getDirectories().get(i)
+			    .getDirectoryName().equalsIgnoreCase(pathName)) {
+			parentDirectory.getDirectories().remove(i);
+			break;
+		    }
+		}
+	    }
+	    removeDirectoryHelper(directory);
+	    return true;
+	}
+    }
+
+    private void removeDirectoryHelper(Directory directory) {
+
+	// First free all the table[i] elements in that directory and
+	// its child directories that contain the file. We need to free
+	// memory
+	// from the files that occupies it. We need to recursively call the
+	// free memory call to each subsequent child directory.
+	freeMemory(directory);
+
+	// call removeDirectory() for each of the child directories
+	for (int i = 0; i < directory.getDirectories().size(); i++) {
+	    removeDirectoryHelper(directory.getDirectories().get(i));
+	}
+    }
+
+    private void freeMemory(Directory directory) {
+	// remove all the associated files in the table[] array
+	for (int i = 0; i < directory.getTable().length; i++) {
+	    removeFileFromDirectory(directory.getTable()[i].getName(),
+		    directory);
+	}
+    }
+
+    private int getSlashCount(String pathName) {
+	int count = 0;
+	for (int i = 0; i < pathName.length(); i++) {
+	    if (pathName.charAt(i) == '/')
+		count++;
+	}
+	return count;
     }
 
     /**
@@ -346,17 +499,59 @@ class FileSystemReal extends FileSystem {
     }
 
     /**
+     * This method is copy of above method except the fact that it can work for
+     * any directory. The above method only works for the root directory, i.e.
+     * for the stock version of the nachos in which there's only one directory.
+     * 
+     * @param name
+     * @return
+     */
+    public boolean removeFileFromDirectory(String name, Directory directory) {
+	BitMap freeMap;
+	FileHeader fileHdr;
+	int sector;
+
+	sector = directory.find(name);
+	if (sector == -1) {
+	    return false; // file not found
+	}
+	fileHdr = new FileHeader(this);
+	fileHdr.fetchFrom(sector);
+
+	freeMap = new BitMap(numDiskSectors);
+	freeMap.fetchFrom(freeMapFile);
+
+	fileHdr.deallocate(freeMap); // remove data blocks
+	freeMap.clear(sector); // remove header block
+	directory.remove(name);
+
+	freeMap.writeBack(freeMapFile); // flush to disk
+	directory.writeBack(directoryFile); // flush to disk
+	return true;
+    }
+
+    /**
      * List all the files in the file system directory (for debugging).
      */
-    // TODO : Extend the list method in the FileSystemReal class so that it
+    // Extend the list method in the FileSystemReal class so that it
     // correctly lists all the files and directories on the system, and use this
     // method to demonstrate that your extensions are working correctly.
 
     public void list() {
-	Directory directory = new Directory(NumDirEntries, this);
+	// Directory directory = new Directory(NumDirEntries, this);
+	// directory.fetchFrom(directoryFile);
+	Directory directory = mapOfDirectories.get("/");
+	listHelper(directory);
+    }
 
-	directory.fetchFrom(directoryFile);
+    private void listHelper(Directory directory) {
+	Debug.println('f', "Listing all the file names in the directory:  "
+		+ directory.getDirectoryName());
 	directory.list();
+	for (int i = 0; i < directory.getDirectories().size(); i++) {
+	    listHelper(directory.getDirectories().get(i));
+	}
+
     }
 
     /**

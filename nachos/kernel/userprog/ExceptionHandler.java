@@ -176,7 +176,6 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		break;
 
 	    case Syscall.SC_Mkdir:
-		// TODO
 		Debug.println('+', "Syscall is : Syscall.SC_Mkdir");
 		startIndex = CPU.readRegister(4);
 		directoryName = obtainExecutableFileName(startIndex);
@@ -184,7 +183,6 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		break;
 
 	    case Syscall.SC_Rmdir:
-		// TODO
 		Debug.println('+', "Syscall is : Syscall.SC_Rmdir");
 		startIndex = CPU.readRegister(4);
 		directoryName = obtainExecutableFileName(startIndex);

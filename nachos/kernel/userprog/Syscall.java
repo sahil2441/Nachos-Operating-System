@@ -11,7 +11,6 @@ import java.util.List;
 import nachos.Debug;
 import nachos.kernel.Nachos;
 import nachos.kernel.devices.ConsoleDriver;
-import nachos.kernel.filesys.FileSystem;
 import nachos.kernel.filesys.OpenFile;
 import nachos.kernel.threads.Semaphore;
 import nachos.machine.CPU;
@@ -481,21 +480,32 @@ public class Syscall {
     }
 
     /**
-     * Creates a directory with the name as directoryName Supports the
-     * parenthesis '/'
+     * Creates a directory with the name as directoryName
      * 
      * @param directoryName
      */
 
     public static void makeDirectory(String directoryName) {
-	// TODO Auto-generated method stub
-
+	if (Nachos.fileSystem.createDirectory(directoryName)) {
+	    Debug.println('f', "Created new directory with Mkdir Command at: "
+		    + directoryName);
+	} else {
+	    Debug.println('f',
+		    "Couldn't create a new directory with Mkdir Command at: "
+			    + directoryName);
+	}
     }
 
     public static void removeDirectory(String directoryName) {
 	// TODO Auto-generated method stub
-	FileSystem fileSystem = Nachos.fileSystem;
-
+	if (Nachos.fileSystem.removeDirectory(directoryName)) {
+	    Debug.println('f', "Removed a directory with Rmdir Command at: "
+		    + directoryName);
+	} else {
+	    Debug.println('f',
+		    "Couldn't remove the directory with Rmdir Command at: "
+			    + directoryName);
+	}
     }
 
 }

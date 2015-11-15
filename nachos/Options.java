@@ -156,7 +156,7 @@ public class Options {
     public boolean FILESYS_REAL = true;
 
     /** Should we format the Nachos disk before using it? */
-    public boolean FORMAT_DISK = false;
+    public boolean FORMAT_DISK = true;
 
     // Test/demo configuration options.
 

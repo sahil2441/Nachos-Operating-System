@@ -9,6 +9,9 @@
 
 package nachos.kernel.filesys;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * This class class defines a UNIX-like "directory". Each entry in the directory
  * describes a file, and where to find it on disk.
@@ -42,13 +45,32 @@ class Directory {
     /** Table of pairs: file name/file header location. */
     private DirectoryEntry table[];
 
+    public DirectoryEntry[] getTable() {
+	return table;
+    }
+
+    public void setTable(DirectoryEntry[] table) {
+	this.table = table;
+    }
+
     /** The underlying filesystem in which the directory resides. */
     private final FileSystemReal filesystem;
 
     /**
      * Name of the directory.
      */
-    private String directoryName;
+    private String pathName;
+
+    public List<Directory> getDirectories() {
+	return directories;
+    }
+
+    public void setDirectories(List<Directory> directories) {
+	this.directories = directories;
+    }
+
+    /** List of Directories within a directory. */
+    public List<Directory> directories;
 
     /**
      * Initialize a directory; initially, the directory is completely empty. If
@@ -81,6 +103,7 @@ class Directory {
     Directory(int size, FileSystemReal filesystem, String name) {
 	this.filesystem = filesystem;
 	this.setDirectoryName(name);
+	this.directories = new ArrayList<>();
 	table = new DirectoryEntry[size];
 	tableSize = size;
 	for (int i = 0; i < tableSize; i++) {
@@ -248,11 +271,26 @@ class Directory {
     }
 
     public String getDirectoryName() {
-	return directoryName;
+	return pathName;
     }
 
     public void setDirectoryName(String directoryName) {
-	this.directoryName = directoryName;
+	this.pathName = directoryName;
+    }
+
+    /**
+     * Returns the index of free
+     * 
+     * @return
+     */
+    public int getFreeDirectoryIndex() {
+	// TODO Auto-generated method stub
+	return 0;
+    }
+
+    public boolean createNewDirectory() {
+
+	return false;
     }
 
 }

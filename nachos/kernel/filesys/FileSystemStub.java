@@ -10,14 +10,17 @@
 
 package nachos.kernel.filesys;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 
 /**
- * This "filesystem stub" class implements a Nachos filesystem by simply
- * passing the filesystem operations through to the native filesystem on
- * the host platform.  This is provided in case the multiprogramming and
- * virtual memory assignments (which make use of the file system) are done
- * before the file system assignment.
+ * This "filesystem stub" class implements a Nachos filesystem by simply passing
+ * the filesystem operations through to the native filesystem on the host
+ * platform. This is provided in case the multiprogramming and virtual memory
+ * assignments (which make use of the file system) are done before the file
+ * system assignment.
  * 
  * @author Peter Druschel (Rice University)
  * @author Eugene W. Stark (Stony Brook University)
@@ -25,40 +28,43 @@ import java.io.*;
 class FileSystemStub extends FileSystem {
 
     /**
-     * Constructor is protected so that all creations are funneled through
-     * the init() factory method of the super class.
+     * Constructor is protected so that all creations are funneled through the
+     * init() factory method of the super class.
      */
-    protected FileSystemStub() { 
-	super(); 
+    protected FileSystemStub() {
+	super();
     }
 
     /**
      * Create a new file with a specified name and size.
      *
-     * @param name The name of the file.
-     * @param initialSize The size of the file.
+     * @param name
+     *            The name of the file.
+     * @param initialSize
+     *            The size of the file.
      * @return true if the operation was successful, otherwise false.
      */
-    public boolean create(String name, long initialSize) { 
+    public boolean create(String name, long initialSize) {
 	FileOutputStream fsFile;
 
 	try {
 	    fsFile = new FileOutputStream(name);
-	    fsFile.close();    
+	    fsFile.close();
 	} catch (IOException e) {
 	    return false;
 	}
 
-	return true; 
+	return true;
     }
 
     /**
-     * Open the file with the specified name and return an OpenFile
-     * object that provides access to the file contents.
+     * Open the file with the specified name and return an OpenFile object that
+     * provides access to the file contents.
      *
-     * @param name The name of the file.
-     * @return An OpenFile object that provides access to the file contents,
-     * if the file was successfully opened, otherwise null.
+     * @param name
+     *            The name of the file.
+     * @return An OpenFile object that provides access to the file contents, if
+     *         the file was successfully opened, otherwise null.
      */
     public OpenFile open(String name) {
 	RandomAccessFile file;
@@ -67,8 +73,7 @@ class FileSystemStub extends FileSystem {
 	    return null;
 	try {
 	    file = new RandomAccessFile(name, "rw");
-	}
-	catch (IOException e) {
+	} catch (IOException e) {
 	    return null;
 	}
 
@@ -78,14 +83,27 @@ class FileSystemStub extends FileSystem {
     /**
      * Remove the file with the specified name.
      *
-     * @param name The name of the file.
+     * @param name
+     *            The name of the file.
      * @return true if the operation was successful, otherwise false.
      */
-    public boolean remove(String name) { 
+    public boolean remove(String name) {
 	File file;
 
 	file = new File(name);
 	return file.delete();
+    }
+
+    @Override
+    public boolean createDirectory(String pathName) {
+	// TODO Auto-generated method stub
+	return false;
+    }
+
+    @Override
+    public boolean removeDirectory(String directoryName) {
+	// TODO Auto-generated method stub
+	return false;
     }
 
 }
