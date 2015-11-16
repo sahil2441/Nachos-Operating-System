@@ -61,6 +61,7 @@ public class ProgTest implements Runnable {
 	OpenFile executable;
 
 	if ((executable = Nachos.fileSystem.open(execName)) == null) {
+	    // TODO : copy implementation of file system stub open () method.
 	    Debug.println('+', "Unable to open executable file: " + execName);
 	    Nachos.scheduler.finishThread();
 	    return;

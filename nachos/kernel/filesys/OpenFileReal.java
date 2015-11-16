@@ -196,24 +196,73 @@ class OpenFileReal implements OpenFile {
     public int writeAt(byte from[], int index, int numBytes, long position) {
 
 	int fileLength = hdr.fileLength();
-	// TODO Return if fileLength >= 3840.
+	// Basic check: Return if fileLength >= 3840(=maxfileSize).
+	if (!(fileLength < hdr.getMaxFileSize())) {
+	    return 0;
+	}
 	int i, firstSector, lastSector, numSectors;
 	boolean firstAligned, lastAligned;
 	byte buf[];
 
-	// TODO: Extend the file length upto max of 30*128 =3840 bytes
-	if ((numBytes <= 0) || (position >= fileLength))
+	// if ((numBytes <= 0) || (position >= fileLength))
+	// return 0; // check request
+	if (numBytes <= 0)
 	    return 0; // check request
-	if ((position + numBytes) > fileLength)
-	    // TODO modify
-	    numBytes = fileLength - (int) position;
+
+	if ((position + numBytes) > fileLength) {
+	    // File needs to be extended.
+	    // numBytes = fileLength - (int) position;
+
+	    if (!((position + numBytes) < hdr.getMaxFileSize())) {
+		// in this case extend the file to max file size.
+		// i.e fill all sectors irrespective of position + numBytes
+		Debug.println('f', "Extending file length to maximum size.");
+		hdr.extendFileLengthToMaximumSize();
+
+		// update
+		firstSector = (int) position / diskSectorSize;
+		lastSector = hdr.getNumSectors();
+		numSectors = hdr.getNumSectors();
+
+	    } else {
+		// We need to know the additional sectors needed in case we are
+		// required to extend the file size.
+
+		int additionalSectorsRequired = (int) ((position + numBytes
+			- fileLength) / diskSectorSize); // it will always be >0
+							 // because of the if
+							 // check above
+		if (hdr.allocateAdditionalSectors(
+			additionalSectorsRequired) == 0) {
+		    // couldn't allocate additional space to file.
+		    Debug.println('f',
+			    "Couldn't allocate additional space to increase file size, due to memory constrain.");
+		    return 0;
+		} else {
+		    // additional space allocated.
+		    // update
+		    firstSector = (int) position / diskSectorSize;
+		    lastSector = hdr.getNumSectors();
+		    numSectors = hdr.getNumSectors();
+		}
+
+	    }
+	} else {
+	    // default case; when extending file length wasn't required.
+	    Debug.println('f', "No need of extending file length.");
+	    firstSector = (int) position / diskSectorSize;
+	    lastSector = ((int) position + numBytes - 1) / diskSectorSize;
+	    numSectors = 1 + lastSector - firstSector;
+
+	}
+
+	// take updated value
+	// TODO: Part 2
+	fileLength = hdr.fileLength();
+
 	Debug.printf('f', "Writing %d bytes at %d, from file of length %d.\n",
 		new Integer(numBytes), new Long(position),
 		new Integer(fileLength));
-
-	firstSector = (int) position / diskSectorSize;
-	lastSector = ((int) position + numBytes - 1) / diskSectorSize;
-	numSectors = 1 + lastSector - firstSector;
 
 	buf = new byte[numSectors * diskSectorSize];
 

@@ -623,4 +623,12 @@ class FileSystemReal extends FileSystem {
 	// the entry we are seeing in map should be already present.
 
     }
+
+    public DiskDriver getDiskDriver() {
+	return diskDriver;
+    }
+
+    public OpenFile getFreeMapFile() {
+	return freeMapFile;
+    }
 }

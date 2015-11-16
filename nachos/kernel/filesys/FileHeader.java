@@ -11,6 +11,7 @@
 package nachos.kernel.filesys;
 
 import nachos.Debug;
+import nachos.kernel.Nachos;
 
 /**
  * This class defines the Nachos "file header" (in UNIX terms, the "i-node"),
@@ -73,8 +74,8 @@ class FileHeader {
     FileHeader(FileSystemReal filesystem) {
 	this.filesystem = filesystem;
 	diskSectorSize = filesystem.diskSectorSize;
-	NumDirect = ((diskSectorSize - 2 * 4) / 4);
-	MaxFileSize = (NumDirect * diskSectorSize);
+	NumDirect = ((diskSectorSize - 2 * 4) / 4); // (128-2*4)/4 =30
+	MaxFileSize = (NumDirect * diskSectorSize); // 30*128 =3840
 
 	dataSectors = new int[NumDirect];
 	// Safest to fill the table with garbage sector numbers,
@@ -233,4 +234,105 @@ class FileHeader {
 	}
     }
 
+    public int getMaxFileSize() {
+	return MaxFileSize;
+    }
+
+    /**
+     * This allocates the additional sectors in the memory.
+     * 
+     * @param additionalSectorsRequired
+     */
+    public int allocateAdditionalSectors(int additionalSectorsRequired) {
+	int numDiskSectors = ((FileSystemReal) Nachos.fileSystem)
+		.getDiskDriver().getNumSectors();
+	OpenFile freeMapFile = ((FileSystemReal) Nachos.fileSystem)
+		.getFreeMapFile();
+	int sectorsAllocated;
+
+	BitMap freeMap;
+
+	freeMap = new BitMap(numDiskSectors);
+	freeMap.fetchFrom(freeMapFile);
+
+	if (freeMap.numClear() == 0) {
+	    // no free space available
+	    Debug.println('f',
+		    "No free space available for allocation.; freeMap.numClear() == 0;");
+	    return 0;
+	} else if (freeMap.numClear() < additionalSectorsRequired) {
+	    // Less free space available for allocation.
+	    sectorsAllocated = freeMap.numClear();
+	} else {
+	    // freeMap.numClear() > additionalSectorsRequired
+	    sectorsAllocated = additionalSectorsRequired;
+	}
+
+	for (int i = numSectors; i < numSectors + sectorsAllocated; i++) {
+	    dataSectors[i] = freeMap.find();
+	}
+
+	// update numsectors
+	numSectors += sectorsAllocated;
+
+	// update filesize
+	numBytes = numSectors * diskSectorSize;
+
+	Debug.println('f', "Additional sectors allocated: " + sectorsAllocated);
+	return sectorsAllocated;
+    }
+
+    /**
+     * Increases the size of the file to the maximum size supported by the
+     * system.
+     */
+    public int extendFileLengthToMaximumSize() {
+	int numDiskSectors = ((FileSystemReal) Nachos.fileSystem)
+		.getDiskDriver().getNumSectors();
+	OpenFile freeMapFile = ((FileSystemReal) Nachos.fileSystem)
+		.getFreeMapFile();
+
+	BitMap freeMap;
+	freeMap = new BitMap(numDiskSectors);
+	freeMap.fetchFrom(freeMapFile);
+
+	int sectorsToBeAllocated = MaxFileSize / diskSectorSize - numSectors;
+	int sectorsAvailable = freeMap.numClear();
+
+	if (sectorsAvailable < sectorsToBeAllocated) {
+	    // not enough space
+	    Debug.println('f', "Not Enough space available for all sectors: "
+		    + sectorsToBeAllocated);
+	    Debug.println('f',
+		    "Only space available for sectors: " + sectorsAvailable);
+	    for (int i = numSectors; i < numSectors + sectorsAvailable; i++) {
+		dataSectors[i] = freeMap.find();
+	    }
+	    // update numsectors
+	    numSectors = numSectors + sectorsAvailable;
+
+	} else {
+	    // enough space available
+	    Debug.println('f', " Enough space available for all sectors: "
+		    + sectorsToBeAllocated);
+	    for (int i = numSectors; i < numSectors
+		    + sectorsToBeAllocated; i++) {
+		dataSectors[i] = freeMap.find();
+	    }
+	    // update numsectors
+	    numSectors = numSectors + sectorsToBeAllocated;
+	}
+
+	// update file length
+	numBytes = numSectors * diskSectorSize;
+	return numSectors;
+    }
+
+    public int getNumSectors() {
+	return numSectors;
+    }
+
+    public void setNumSectors(int numSectors) {
+	this.numSectors = numSectors;
+    }
 }
