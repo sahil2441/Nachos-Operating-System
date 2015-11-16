@@ -2,5 +2,5 @@
 
 int main()
 {
-	Mkdir("/sahil");
+	Mkdir("/1");
 }

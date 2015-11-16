@@ -497,7 +497,6 @@ public class Syscall {
     }
 
     public static void removeDirectory(String directoryName) {
-	// TODO Auto-generated method stub
 	if (Nachos.fileSystem.removeDirectory(directoryName)) {
 	    Debug.println('f', "Removed a directory with Rmdir Command at: "
 		    + directoryName);

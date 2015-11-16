@@ -314,6 +314,8 @@ class FileSystemReal extends FileSystem {
 	if (pathName == "/")
 	    return false;
 	Directory childDirectory = new Directory(NumDirEntries, this, pathName);
+
+	// TODO Check if required??
 	allocateSpaceForDirectory(childDirectory);
 
 	// check parent directory if it exists in map
@@ -346,6 +348,9 @@ class FileSystemReal extends FileSystem {
 		// insert new directory(==child) in parent directory
 		parentDirectory.getDirectories().add(childDirectory);
 		Debug.println('f', "Created new directory: " + pathName);
+		// update the map
+		mapOfDirectories.put(pathName, childDirectory);
+
 		return true;
 
 	    } else {
@@ -407,6 +412,12 @@ class FileSystemReal extends FileSystem {
 	}
     }
 
+    /**
+     * Free memory for all associated files in the directory. And recursively
+     * call the method for all sub directorues.
+     * 
+     * @param directory
+     */
     private void removeDirectoryHelper(Directory directory) {
 
 	// First free all the table[i] elements in that directory and
@@ -420,8 +431,15 @@ class FileSystemReal extends FileSystem {
 	for (int i = 0; i < directory.getDirectories().size(); i++) {
 	    removeDirectoryHelper(directory.getDirectories().get(i));
 	}
+	mapOfDirectories.put(directory.getDirectoryName(), null);
     }
 
+    /**
+     * Method to free all the associated memory blocks on disk for the table of
+     * Directory Entry.
+     * 
+     * @param directory
+     */
     private void freeMemory(Directory directory) {
 	// remove all the associated files in the table[] array
 	for (int i = 0; i < directory.getTable().length; i++) {
@@ -539,8 +557,12 @@ class FileSystemReal extends FileSystem {
 
     public void list() {
 	// Directory directory = new Directory(NumDirEntries, this);
-	// directory.fetchFrom(directoryFile);
 	Directory directory = mapOfDirectories.get("/");
+
+	// update the files from disk
+	directory.fetchFrom(directoryFile);
+	// Directory directory = mapOfDirectories.get("/");
+
 	listHelper(directory);
     }
 
@@ -587,6 +609,18 @@ class FileSystemReal extends FileSystem {
      * kinds of problems:
      */
     public void checkFileSystemForConsistency() {
+	// part 1
+	// iterate through all the sector numbers in the datasector array and
+	// check the corresponding entry in the bitmap(=freeMap).
+
+	// part 2
+	// create a map<integer, boolean> that records the sector occupied by
+	// files. Then iterate through the bitmap and check if corresponding
+	// entry in the map is true.
+
+	// part 3
+	// similar to part 2. we create a map for sector entries and check if
+	// the entry we are seeing in map should be already present.
 
     }
 }
