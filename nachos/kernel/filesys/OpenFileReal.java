@@ -223,8 +223,9 @@ class OpenFileReal implements OpenFile {
 
 		// update
 		firstSector = (int) position / diskSectorSize;
-		lastSector = hdr.getNumSectors();
+		lastSector = hdr.getNumSectors() - 1;
 		numSectors = hdr.getNumSectors();
+		numBytes = hdr.fileLength();
 
 	    } else {
 		// We need to know the additional sectors needed in case we are
@@ -234,6 +235,9 @@ class OpenFileReal implements OpenFile {
 			- fileLength) / diskSectorSize); // it will always be >0
 							 // because of the if
 							 // check above
+		additionalSectorsRequired = (position + numBytes - fileLength)
+			% diskSectorSize == 0 ? additionalSectorsRequired
+				: additionalSectorsRequired + 1;
 		if (hdr.allocateAdditionalSectors(
 			additionalSectorsRequired) == 0) {
 		    // couldn't allocate additional space to file.
@@ -244,8 +248,8 @@ class OpenFileReal implements OpenFile {
 		    // additional space allocated.
 		    // update
 		    firstSector = (int) position / diskSectorSize;
-		    lastSector = hdr.getNumSectors();
-		    numSectors = hdr.getNumSectors();
+		    lastSector = hdr.getNumSectors() - 1;
+		    numSectors = hdr.getNumSectors() - 1;
 		}
 
 	    }

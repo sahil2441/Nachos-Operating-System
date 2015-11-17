@@ -15,19 +15,17 @@ import java.io.IOException;
 
 import nachos.Debug;
 import nachos.Options;
-import nachos.machine.NachosThread;
-import nachos.machine.Simulation;
 import nachos.kernel.Nachos;
 import nachos.kernel.filesys.OpenFile;
+import nachos.machine.NachosThread;
+import nachos.machine.Simulation;
 
 /**
- * This class implements some simple test routines for the file system.
- * We implement:
- *	   Copy -- copy a file from UNIX to Nachos;
- *	   Print -- cat the contents of a Nachos file;
- *	   Perftest -- a stress test for the Nachos file system
- *		read and write a really large file in tiny chunks
- *		(won't work on baseline system!).
+ * This class implements some simple test routines for the file system. We
+ * implement: Copy -- copy a file from UNIX to Nachos; Print -- cat the contents
+ * of a Nachos file; Perftest -- a stress test for the Nachos file system read
+ * and write a really large file in tiny chunks (won't work on baseline
+ * system!).
  *
  * @author Thomas Anderson (UC Berkeley), original C++ version
  * @author Peter Druschel (Rice University), Java translation
@@ -41,8 +39,10 @@ public class FileSystemTest implements Runnable {
     /**
      * Copy the contents of the host file "from" to the Nachos file "to"
      *
-     * @param from The name of the file to be copied from the host filesystem.
-     * @param to The name of the file to create on the Nachos filesystem.
+     * @param from
+     *            The name of the file to be copied from the host filesystem.
+     * @param to
+     *            The name of the file to create on the Nachos filesystem.
      */
     private void copy(String from, String to) {
 	File fp;
@@ -65,7 +65,7 @@ public class FileSystemTest implements Runnable {
 	// Create a Nachos file of the same length
 	Debug.printf('f', "Copying file %s, size %d, to file %s\n", from,
 		new Long(fileLength), to);
-	if (!Nachos.fileSystem.create(to, (int)fileLength)) {	 
+	if (!Nachos.fileSystem.create(to, (int) fileLength)) {
 	    // Create Nachos file
 	    Debug.printf('+', "Copy: couldn't create output file %s\n", to);
 	    return;
@@ -79,23 +79,27 @@ public class FileSystemTest implements Runnable {
 	try {
 	    fs = new FileInputStream(fp);
 	    while ((amountRead = fs.read(buffer)) > 0)
-		openFile.write(buffer, 0, amountRead);	
+		openFile.write(buffer, 0, amountRead);
 	} catch (IOException e) {
-	    Debug.print('+', "Copy: data copy failed\n");      
+	    Debug.print('+', "Copy: data copy failed\n");
 	    return;
 	}
 	// Close the UNIX and the Nachos files
-	//delete openFile;
-	try {fs.close();} catch (IOException e) {}
+	// delete openFile;
+	try {
+	    fs.close();
+	} catch (IOException e) {
+	}
     }
 
     /**
      * Print the contents of the Nachos file "name".
      *
-     * @param name The name of the file to print.
+     * @param name
+     *            The name of the file to print.
      */
     private void print(String name) {
-	OpenFile openFile;    
+	OpenFile openFile;
 	int i, amountRead;
 	byte buffer[];
 
@@ -113,14 +117,13 @@ public class FileSystemTest implements Runnable {
     }
 
     /**
-     * Stress the Nachos file system by creating a large file, writing
-     * it out a bit at a time, reading it back a bit at a time, and then
-     * deleting the file.
+     * Stress the Nachos file system by creating a large file, writing it out a
+     * bit at a time, reading it back a bit at a time, and then deleting the
+     * file.
      *
-     *	Implemented as three separate routines:
-     *	  FileWrite -- write the file;
-     *	  FileRead -- read the file;
-     *	  PerformanceTest -- overall control, and print out performance #'s.
+     * Implemented as three separate routines: FileWrite -- write the file;
+     * FileRead -- read the file; PerformanceTest -- overall control, and print
+     * out performance #'s.
      */
     private void performanceTest() {
 	Debug.print('+', "Starting file system performance test:\n");
@@ -147,16 +150,19 @@ public class FileSystemTest implements Runnable {
     private static final byte Contents[] = ContentString.getBytes();
 
     /** Total size of the test file. */
-    private static final int FileSize = ContentSize * 300;
+    // private static final int FileSize = ContentSize * 300;
+
+    private static final int FileSize = 50;
 
     /**
      * Write the test file for the performance test.
      */
     private void fileWrite() {
-	OpenFile openFile;    
+	OpenFile openFile;
 	int i, numBytes;
 
-	Debug.printf('+', "Sequential write of %d byte file, in %d byte chunks\n", 
+	Debug.printf('+',
+		"Sequential write of %d byte file, in %d byte chunks\n",
 		new Integer(FileSize), new Integer(ContentSize));
 	if (!Nachos.fileSystem.create(FileName, FileSize)) {
 	    Debug.printf('+', "Perf test: can't create %s\n", FileName);
@@ -167,24 +173,38 @@ public class FileSystemTest implements Runnable {
 	    Debug.printf('+', "Perf test: unable to open %s\n", FileName);
 	    return;
 	}
-	for (i = 0; i < FileSize; i += ContentSize) {
-	    numBytes = openFile.write(Contents, 0, ContentSize);
-	    if (numBytes < 10) {
-		Debug.printf('+', "Perf test: unable to write %s\n", FileName);
-		return;
-	    }
+
+	// write more than 200 bytes
+
+	byte[] arr = new byte[4000];
+	for (int j = 0; j < arr.length; j++) {
+	    arr[j] = 50;
 	}
+	numBytes = openFile.write(arr, 0, arr.length);
+	if (numBytes < 10) {
+	    Debug.printf('+', "Perf test: unable to write %s\n", FileName);
+	    return;
+	}
+
+	// for (i = 0; i < FileSize; i += ContentSize) {
+	// numBytes = openFile.write(Contents, 0, ContentSize);
+	// if (numBytes < 10) {
+	// Debug.printf('+', "Perf test: unable to write %s\n", FileName);
+	// return;
+	// }
+	// }
     }
 
     /**
      * Read and verify the file for the performance test.
      */
     private void fileRead() {
-	OpenFile openFile;    
+	OpenFile openFile;
 	byte buffer[] = new byte[ContentSize];
 	int i, numBytes;
 
-	Debug.printf('+',"Sequential read of %d byte file, in %d byte chunks\n", 
+	Debug.printf('+',
+		"Sequential read of %d byte file, in %d byte chunks\n",
 		new Integer(FileSize), new Integer(ContentSize));
 
 	if ((openFile = Nachos.fileSystem.open(FileName)) == null) {
@@ -203,89 +223,86 @@ public class FileSystemTest implements Runnable {
     /**
      * Compare two byte arrays to see if they agree up to a specified length.
      *
-     * @param a The first byte array.
-     * @param b The second byte array.
-     * @param len The number of bytes to compare.
+     * @param a
+     *            The first byte array.
+     * @param b
+     *            The second byte array.
+     * @param len
+     *            The number of bytes to compare.
      * @return true if the arrays agree up to the specified number of bytes,
-     * false otherwise.
+     *         false otherwise.
      */
     private static boolean byteCmp(byte a[], byte b[], int len) {
 	for (int i = 0; i < len; i++)
-	    if (a[i] != b[i]) return false;
+	    if (a[i] != b[i])
+		return false;
 	return true;
     }
 
     /**
-     * Entry point for the filesystem test thread.
-     * What the test actually does is controlled by program arguments:
-     *   -cp <hostfile> <nachosfile>       copy a file from the host system to Nachos
-     *   -p <nachosfile>                   print a Nachos file
-     *   -r <nachosfile>                   remove a Nachos file
-     *   -l                                list Nachos directory
-     *   -D                                print entire filesystem contents
-     *   -t                                performance test
-     *   
-     * Note also that the -f argument is used by the Nachos filesystem to determine
-     * whether the disk should be formatted as part of filesystem initialization.
+     * Entry point for the filesystem test thread. What the test actually does
+     * is controlled by program arguments: -cp <hostfile> <nachosfile> copy a
+     * file from the host system to Nachos -p <nachosfile> print a Nachos file
+     * -r <nachosfile> remove a Nachos file -l list Nachos directory -D print
+     * entire filesystem contents -t performance test
+     * 
+     * Note also that the -f argument is used by the Nachos filesystem to
+     * determine whether the disk should be formatted as part of filesystem
+     * initialization.
      */
     public void run() {
-	Nachos.options.processOptions
-	(new Options.Spec[] {
-		new Options.Spec
-			("-cp",  // copy from UNIX to Nachos
-			 new Class[] {String.class, String.class},
-			 "Usage: -cp <filename1> <filename2>",
-			 new Options.Action() {
-			    public void processOption(String flag, Object[] params) {
-				copy((String)params[0], (String)params[1]);
+	Nachos.options
+		.processOptions(new Options.Spec[] { new Options.Spec("-cp", // copy
+									     // from
+									     // UNIX
+									     // to
+									     // Nachos
+			new Class[] { String.class, String.class },
+			"Usage: -cp <filename1> <filename2>",
+			new Options.Action() {
+			    public void processOption(String flag,
+				    Object[] params) {
+				copy((String) params[0], (String) params[1]);
 			    }
-			 }),
-		new Options.Spec
-			("-p",  // print a Nachos file
-			 new Class[] {String.class},
-			 "Usage: -p <filename>",
-			 new Options.Action() {
-			    public void processOption(String flag, Object[] params) {
-				print((String)params[0]);
-			    }
-			 }),
-		new Options.Spec
-			("-r",  // remove a Nachos file
-			 new Class[] {String.class},
-			 "Usage: -p <filename>",
-			 new Options.Action() {
-			    public void processOption(String flag, Object[] params) {
-				Nachos.fileSystem.remove((String)params[0]);
-			    }
-			 }),
-		new Options.Spec
-			("-l",  // list Nachos directory
-			 new Class[] { },
-			 null,
-			 new Options.Action() {
-			    public void processOption(String flag, Object[] params) {
-				Nachos.fileSystem.list();
-			    }
-			 }),
-		new Options.Spec
-			("-D",  // print entire filesystem
-			 new Class[] { },
-			 null,
-			 new Options.Action() {
-			    public void processOption(String flag, Object[] params) {
-				Nachos.fileSystem.print();
-			    }
-			 }),
-		new Options.Spec
-			("-t",  // performance test
-			 new Class[] { },
-			 null,
-			 new Options.Action() {
-			    public void processOption(String flag, Object[] params) {
-				performanceTest();
-			    }
-			 })
-	 });
+			}),
+			new Options.Spec("-p", // print a Nachos file
+				new Class[] { String.class },
+				"Usage: -p <filename>", new Options.Action() {
+				    public void processOption(String flag,
+					    Object[] params) {
+					print((String) params[0]);
+				    }
+				}),
+			new Options.Spec("-r", // remove a Nachos file
+				new Class[] { String.class },
+				"Usage: -p <filename>", new Options.Action() {
+				    public void processOption(String flag,
+					    Object[] params) {
+					Nachos.fileSystem
+						.remove((String) params[0]);
+				    }
+				}),
+			new Options.Spec("-l", // list Nachos directory
+				new Class[] {}, null, new Options.Action() {
+				    public void processOption(String flag,
+					    Object[] params) {
+					Nachos.fileSystem.list();
+				    }
+				}),
+			new Options.Spec("-D", // print entire filesystem
+				new Class[] {}, null, new Options.Action() {
+				    public void processOption(String flag,
+					    Object[] params) {
+					Nachos.fileSystem.print();
+				    }
+				}),
+			new Options.Spec("-t", // performance test
+				new Class[] {}, null, new Options.Action() {
+				    public void processOption(String flag,
+					    Object[] params) {
+					performanceTest();
+				    }
+				}) });
 	Nachos.scheduler.finishThread();
     }
 
@@ -293,7 +310,8 @@ public class FileSystemTest implements Runnable {
      * Entry point for the FileSystem test.
      */
     public static void start() {
-	NachosThread thread = new NachosThread("Filesystem test", new FileSystemTest());
+	NachosThread thread = new NachosThread("Filesystem test",
+		new FileSystemTest());
 	Nachos.scheduler.readyToRun(thread);
     }
 }
