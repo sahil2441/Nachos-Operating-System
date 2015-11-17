@@ -267,7 +267,6 @@ class FileSystemReal extends FileSystem {
      * @return true if the file was successfully created, otherwise false.
      */
     public boolean create(String name, long initialSize) {
-	// TODO: Check directory based on path
 	Directory directory;
 	BitMap freeMap;
 	FileHeader hdr;
@@ -600,7 +599,7 @@ class FileSystemReal extends FileSystem {
     }
 
     /**
-     * TODO Implement a method in the FileSystemReal class that checks the file
+     * Implement a method in the FileSystemReal class that checks the file
      * system for consistency. In particular, it should detect the following
      * kinds of problems:
      */
@@ -618,7 +617,6 @@ class FileSystemReal extends FileSystem {
 	freeMap = new BitMap(numDiskSectors);
 	freeMap.fetchFrom(freeMapFile);
 
-	// TODO Also iterate thorough other directories if feature implemented
 	// part 1
 	// iterate through all the sector numbers in the datasector array and
 	// check the corresponding entry in the bitmap(=freeMap).
@@ -660,10 +658,64 @@ class FileSystemReal extends FileSystem {
 	// files. Then iterate through the bitmap and check if corresponding
 	// entry in the map is true.
 
+	// For ever sector occupied by any file's data sector update the map as
+	// true. Then go through the bit map and check every corresponding entry
+	// in the hash map.
+
+	Map<Integer, Boolean> map = new HashMap<>();
+
+	for (int i = 0; i < directory.getTable().length; i++) {
+	    // sector location for file header
+	    int fileHdrSector = directory.getTable()[i].getSector();
+
+	    // update header sector in map.
+	    map.put(fileHdrSector, true);
+
+	    FileHeader fileHdr = new FileHeader(this);
+	    fileHdr.fetchFrom(fileHdrSector);
+
+	    // update all data sectors for the file.
+	    for (int j = 0; j < fileHdr.getDataSectors().length; j++) {
+		int sector = fileHdr.getDataSectors()[j];
+		if (sector == -1)
+		    break;
+		map.put(sector, true);
+	    }
+	}
+	freeMap.checkFileSystem(map);
+
 	// part 3
 	// similar to part 2. we create a map for sector entries and check if
 	// the entry we are seeing in map should be already present.
 
+	map = new HashMap<>();
+	for (int i = 0; i < directory.getTable().length; i++) {
+	    // sector location for file header
+	    int fileHdrSector = directory.getTable()[i].getSector();
+
+	    // update header sector in map.
+	    if (fileHdrSector > 0 && map.get(fileHdrSector) != null) {
+		// Found Inconsistency
+		Debug.println('f', "File Header Sector no: " + fileHdrSector
+			+ " referenced more than once." + "Referenced by: "
+			+ directory.getTable()[i].getName());
+	    }
+	    map.put(fileHdrSector, true);
+
+	    FileHeader fileHdr = new FileHeader(this);
+	    fileHdr.fetchFrom(fileHdrSector);
+
+	    // update all data sectors for the file.
+	    for (int j = 0; j < fileHdr.getDataSectors().length; j++) {
+		int sector = fileHdr.getDataSectors()[i];
+		if (sector > -1 && map.get(sector) != null) {
+		    // Found Inconsistency
+		    Debug.println('f', "Sector no: " + sector
+			    + " referenced more than once.");
+		}
+		map.put(sector, true);
+	    }
+	}
     }
 
     public DiskDriver getDiskDriver() {

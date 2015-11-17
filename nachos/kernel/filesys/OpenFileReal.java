@@ -204,8 +204,6 @@ class OpenFileReal implements OpenFile {
 	boolean firstAligned, lastAligned;
 	byte buf[];
 
-	// if ((numBytes <= 0) || (position >= fileLength))
-	// return 0; // check request
 	if (numBytes <= 0)
 	    return 0; // check request
 

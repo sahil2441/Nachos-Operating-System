@@ -10,22 +10,23 @@
 
 package nachos.kernel.filesys;
 
+import java.util.Map;
+
 import nachos.Debug;
 
 /**
- * This class defines a "bitmap" -- an array of bits,
- * each of which can be independently set, cleared, and tested.
+ * This class defines a "bitmap" -- an array of bits, each of which can be
+ * independently set, cleared, and tested.
  *
- * Most useful for managing the allocation of the elements of an array --
- * for instance, disk sectors, or main memory pages.
- * Each bit represents whether the corresponding sector or page is
- * in use or free.
+ * Most useful for managing the allocation of the elements of an array -- for
+ * instance, disk sectors, or main memory pages. Each bit represents whether the
+ * corresponding sector or page is in use or free.
  *
- * We represent a bitmap as an array of unsigned integers, on which we do
- * modulo arithmetic to find the bit we are interested in.
- * The bitmap can be parameterized by the number of bits being managed.
- * It is also equipped with fetchFrom() and writeBack() methods for
- * reading a bitmap from, and writing a bit map to, a Nachos file.
+ * We represent a bitmap as an array of unsigned integers, on which we do modulo
+ * arithmetic to find the bit we are interested in. The bitmap can be
+ * parameterized by the number of bits being managed. It is also equipped with
+ * fetchFrom() and writeBack() methods for reading a bitmap from, and writing a
+ * bit map to, a Nachos file.
  * 
  * @author Thomas Anderson (UC Berkeley), original C++ version
  * @author Peter Druschel (Rice University), Java translation
@@ -53,27 +54,30 @@ public class BitMap {
     private int map[];
 
     /**
-     * Initialize a bitmap with "nitems" bits, so that every bit is clear.
-     * it can be added somewhere on a list.
+     * Initialize a bitmap with "nitems" bits, so that every bit is clear. it
+     * can be added somewhere on a list.
      *
-     * @param nitems The number of bits in the bitmap.
+     * @param nitems
+     *            The number of bits in the bitmap.
      */
-    public BitMap(int nitems) { 
+    public BitMap(int nitems) {
 	numBits = nitems;
 	numWords = numBits / BitsInWord;
-	if (numBits % BitsInWord != 0) numWords++;
+	if (numBits % BitsInWord != 0)
+	    numWords++;
 
 	map = new int[numWords];
-	for (int i = 0; i < numBits; i++) 
+	for (int i = 0; i < numBits; i++)
 	    clear(i);
     }
 
     /**
      * Set the "nth" bit in a bitmap.
      *
-     * @param which  The number of the bit to be set.
+     * @param which
+     *            The number of the bit to be set.
      */
-    public void mark(int which) { 
+    public void mark(int which) {
 	Debug.ASSERT(which >= 0 && which < numBits);
 	map[which / BitsInWord] |= 1 << (which % BitsInWord);
     }
@@ -81,7 +85,8 @@ public class BitMap {
     /**
      * Clear the "nth" bit in a bitmap.
      *
-     * @param which The number of the bit to be cleared.
+     * @param which
+     *            The number of the bit to be cleared.
      */
     public void clear(int which) {
 	Debug.ASSERT(which >= 0 && which < numBits);
@@ -91,7 +96,8 @@ public class BitMap {
     /**
      * Test if the "nth" bit is set.
      *
-     * @param which The number of the bit to be tested.
+     * @param which
+     *            The number of the bit to be tested.
      * @return true if the indicated bit is set, otherwise false.
      */
     public boolean test(int which) {
@@ -104,9 +110,8 @@ public class BitMap {
     }
 
     /**
-     * Find the first bit that is clear.
-     * As a side effect, set the bit (mark it as in use).
-     * (In other words, find and allocate a bit.)
+     * Find the first bit that is clear. As a side effect, set the bit (mark it
+     * as in use). (In other words, find and allocate a bit.)
      *
      * @return the bit set, if one was found, otherwise -1.
      *
@@ -121,8 +126,8 @@ public class BitMap {
     }
 
     /**
-     * Return the number of clear bits in the bitmap.
-     * (In other words, how many bits are unallocated?)
+     * Return the number of clear bits in the bitmap. (In other words, how many
+     * bits are unallocated?)
      *
      * @return the number of clear bits in the bitmap.
      */
@@ -130,19 +135,20 @@ public class BitMap {
 	int count = 0;
 
 	for (int i = 0; i < numBits; i++)
-	    if (!test(i)) count++;
+	    if (!test(i))
+		count++;
 	return count;
     }
 
     /**
      * Print the contents of the bitmap, for debugging.
      *
-     * Could be done in a number of ways, but we just print the #'s of
-     * all the bits that are set in the bitmap.
+     * Could be done in a number of ways, but we just print the #'s of all the
+     * bits that are set in the bitmap.
      */
     public void print() {
 	String toPrint = "";
-	toPrint += "Bitmap set: "; 
+	toPrint += "Bitmap set: ";
 	for (int i = 0; i < numBits; i++)
 	    if (test(i))
 		toPrint += (i + ", ");
@@ -154,29 +160,49 @@ public class BitMap {
     /**
      * Initialize the contents of a bitmap from a Nachos file.
      *
-     * @param file The file to read the bitmap from.
+     * @param file
+     *            The file to read the bitmap from.
      */
     public void fetchFrom(OpenFile file) {
-	byte buffer[] = new byte[numWords*4];
+	byte buffer[] = new byte[numWords * 4];
 	// read bitmap
 	file.readAt(buffer, 0, numWords * 4, 0);
 	// unmarshall
 	for (int i = 0; i < numWords; i++)
-	    map[i] = FileSystem.bytesToInt(buffer, i*4);
+	    map[i] = FileSystem.bytesToInt(buffer, i * 4);
     }
 
     /**
      * Store the contents of a bitmap to a Nachos file.
      *
-     * @param file The file to write the bitmap to.
+     * @param file
+     *            The file to write the bitmap to.
      */
     public void writeBack(OpenFile file) {
-	byte buffer[] = new byte[numWords*4];
+	byte buffer[] = new byte[numWords * 4];
 	// marshall
 	for (int i = 0; i < numWords; i++)
-	    FileSystem.intToBytes(map[i], buffer, i*4);
+	    FileSystem.intToBytes(map[i], buffer, i * 4);
 	// write bitmap
 	file.writeAt(buffer, 0, numWords * 4, 0);
+    }
+
+    /**
+     * This method is to check: Disk sectors that are not used by any files (or
+     * file headers), but that are marked as "in use" in the bitmap.
+     * 
+     * @param mapFileSectors
+     *            Contains the sectors that are occupied the files on disk.
+     */
+    public void checkFileSystem(Map<Integer, Boolean> mapFileSectors) {
+	for (int i = 0; i < numBits; i++) {
+	    if (test(i) && mapFileSectors.get(i) == null) {
+		// Found Inconsistency
+		Debug.println('f', "Found Inconsistency: " + "Sector number : "
+			+ i
+			+ " marked occupied in Bitmap but not occupied by any file.");
+	    }
+	}
     }
 
 }

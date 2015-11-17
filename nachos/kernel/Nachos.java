@@ -99,12 +99,7 @@ public class Nachos implements Runnable {
 	    fileSystem = FileSystem.init(diskDriver);
 
 	// testing
-	for (int i = 0; i < 10; i++) {
-	    fileSystem.createDirectory("/" + i);
-	    fileSystem.create("File: " + i, 1000);
-	    fileSystem.create("File: " + i + i, 1000);
-	}
-	fileSystem.checkFileSystemForConsistency();
+	testFileSystem();
 
 	// Do per-CPU initialization: Before we can run user programs,
 	// we need to set an exception handler on each CPU to handle
@@ -153,6 +148,16 @@ public class Nachos implements Runnable {
 
     }
 
+    private void testFileSystem() {
+	// TODO: Add more stuff
+	for (int i = 0; i < 10; i++) {
+	    fileSystem.createDirectory("/" + i);
+	    fileSystem.create("File: " + i, 10);
+	    fileSystem.create("File: " + i + i, 10);
+	}
+	fileSystem.checkFileSystemForConsistency();
+    }
+
     /**
      * Bootstrap the operating system kernel.
      *
@@ -174,13 +179,19 @@ public class Nachos implements Runnable {
 	// Nachos thread, but right now we are only in a Java thread.
 	// So, we need to create the first Nachos thread and start it running
 	// under the control of the Nachos scheduler.
-	Debug.println('1',
-		"Creating first Thread from Nachos.java and putting on scheduler.");
 
-	NachosThread firstThread = new NachosThread("FirstThread",
-		new Nachos());
-	scheduler = new Scheduler(firstThread);
+	// Debug.println('1',
+	// "Creating first Thread from Nachos.java and putting on scheduler.");
+	//
+	// NachosThread firstThread = new NachosThread("FirstThread",
+	// new Nachos());
+	// scheduler = new Scheduler(firstThread);
+	// Debug.println('1',
+	// "Creating filefrom Nachos.java and putting on scheduler.");
 
+	NachosThread fileSystemExerciserThread = new NachosThread(
+		"File System Exerciser", new Nachos());
+	scheduler = new Scheduler(fileSystemExerciserThread);
 	// The Nachos thread we just created will begin running in the run()
 	// method of this class. The remainder of the system initialization will
 	// be taken care of there, so our responsibility here is finished.
