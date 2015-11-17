@@ -365,7 +365,6 @@ class FileHeader {
 	int numSectorsNew = numSectors + sectorsAllocated;
 	// based on sectors allocated we update the data
 
-	// TODO
 	// use only dataTable array in this case
 	if (numSectorsNew <= 28) {
 	    for (int i = numSectors; i < numSectors + sectorsAllocated; i++) {

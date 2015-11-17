@@ -9,9 +9,6 @@
 
 package nachos.kernel.filesys;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * This class class defines a UNIX-like "directory". Each entry in the directory
  * describes a file, and where to find it on disk.
@@ -61,17 +58,6 @@ class Directory {
      */
     private String pathName;
 
-    public List<Directory> getDirectories() {
-	return directories;
-    }
-
-    public void setDirectories(List<Directory> directories) {
-	this.directories = directories;
-    }
-
-    /** List of Directories within a directory. */
-    public List<Directory> directories;
-
     /**
      * Initialize a directory; initially, the directory is completely empty. If
      * the disk is being formatted, an empty directory is all we need, but
@@ -85,7 +71,6 @@ class Directory {
     Directory(int size, FileSystemReal filesystem) {
 	this.filesystem = filesystem;
 	table = new DirectoryEntry[size];
-	this.directories = new ArrayList<>();
 	tableSize = size;
 	for (int i = 0; i < tableSize; i++) {
 	    table[i] = new DirectoryEntry();
@@ -104,7 +89,6 @@ class Directory {
     Directory(int size, FileSystemReal filesystem, String name) {
 	this.filesystem = filesystem;
 	this.setDirectoryName(name);
-	this.directories = new ArrayList<>();
 	table = new DirectoryEntry[size];
 	tableSize = size;
 	for (int i = 0; i < tableSize; i++) {

@@ -112,13 +112,6 @@ class FileSystemReal extends FileSystem {
     private final OpenFile directoryFile;
 
     /**
-     * Map of Directories. It's to check which directories we have in our file
-     * system.
-     */
-    // TODO: Update map in memory so it works when disk is not formatted.
-    private Map<String, Directory> mapOfDirectories;
-
-    /**
      * Initialize the file system. If format = true, the disk has nothing on it,
      * and we need to initialize the disk to contain an empty directory, and a
      * bitmap of free sectors (with almost but not all of the sectors marked as
@@ -148,11 +141,6 @@ class FileSystemReal extends FileSystem {
 	    // passing root as the directory name
 	    Directory rootDirectory = new Directory(NumDirEntries, this, "/");
 
-	    // initialize the map
-	    mapOfDirectories = new HashMap<>();
-	    // add root directory to the map
-	    this.mapOfDirectories.put("/", rootDirectory);
-
 	    FileHeader mapHdr = new FileHeader(this);
 	    FileHeader dirHdr = new FileHeader(this);
 
@@ -170,6 +158,12 @@ class FileSystemReal extends FileSystem {
 
 	    Debug.ASSERT(mapHdr.allocate(freeMap, FreeMapFileSize));
 	    Debug.ASSERT(dirHdr.allocate(freeMap, DirectoryFileSize));
+
+	    // insert the root directory in the table array
+	    int sector = freeMap.find();
+	    if (sector != -1 && rootDirectory.add("/", sector)) {
+		Debug.println('f', "Root Directory added to table array.");
+	    }
 
 	    // Flush the bitmap and directory FileHeaders back to disk
 	    // We need to do this before we can "Open" the file, since open
@@ -304,9 +298,40 @@ class FileSystemReal extends FileSystem {
 	    }
 	}
 	Debug.println('+', "File system creation status: " + success);
-	if (success) {
-	    // update the map is file added successfully
-	    mapOfDirectories.put("/", directory);
+	return success;
+    }
+
+    /**
+     * Adds a file in the table array as a directory entry
+     * 
+     * @param pathName
+     * @return
+     */
+
+    public boolean createDirectoryHelper(String pathName) {
+	Directory directory;
+	BitMap freeMap;
+	int sector;
+	boolean success;
+	directory = new Directory(NumDirEntries, this);
+	directory.fetchFrom(directoryFile);
+
+	if (directory.find(pathName) != -1)
+	    success = false; // file is already in directory
+	else {
+	    freeMap = new BitMap(numDiskSectors);
+	    freeMap.fetchFrom(freeMapFile);
+	    sector = freeMap.find(); // find a sector to hold the file header
+	    if (sector == -1)
+		success = false; // no free block for file header
+	    else if (!directory.add(pathName, sector))
+		success = false; // no space in directory
+	    else {
+		success = true;
+		// everything worked, flush all changes back to disk
+		directory.writeBack(directoryFile);
+		freeMap.writeBack(freeMapFile);
+	    }
 	}
 	return success;
     }
@@ -316,10 +341,12 @@ class FileSystemReal extends FileSystem {
      * name.
      */
     public boolean createDirectory(String pathName) {
+	Directory directory;
+	directory = new Directory(NumDirEntries, this);
+	directory.fetchFrom(directoryFile);
 
 	if (pathName.equalsIgnoreCase("/") || pathName.equalsIgnoreCase(""))
 	    return false;
-	Directory childDirectory = new Directory(NumDirEntries, this, pathName);
 
 	// check parent directory if it exists in map
 	// if yes then extract from map and put it in the list
@@ -327,16 +354,13 @@ class FileSystemReal extends FileSystem {
 
 	if (slashCount == 1) {
 	    // create a sub directory in the root directory only
-	    if (mapOfDirectories.get("/") != null) {
-		((Directory) mapOfDirectories.get("/")).getDirectories()
-			.add(childDirectory);
-
-		// update the map
-		mapOfDirectories.put(pathName, childDirectory);
+	    if (directory.find("/") != -1) {
+		createDirectoryHelper(pathName);
 		Debug.println('f', "Created new directory: " + pathName);
 		return true;
-	    } else {
-		// root doesn't exist
+	    }
+	    // root doesn't exist
+	    else {
 		Debug.println('f', "Root Directory doesn't exist.");
 		return false;
 	    }
@@ -344,25 +368,18 @@ class FileSystemReal extends FileSystem {
 	    // check if parent exists
 	    String parentDirectoryName = pathName.substring(0,
 		    pathName.lastIndexOf('/'));
-	    Directory parentDirectory = mapOfDirectories
-		    .get(parentDirectoryName);
 
-	    if (parentDirectory != null) {
-		// insert new directory(==child) in parent directory
-		parentDirectory.getDirectories().add(childDirectory);
+	    if (directory.find(parentDirectoryName) != -1) {
+		createDirectoryHelper(pathName);
 		Debug.println('f', "Created new directory: " + pathName);
-		// update the map
-		mapOfDirectories.put(pathName, childDirectory);
-
 		return true;
-
-	    } else {
-		// Parent doesn't exist
+	    }
+	    // Parent doesn't exist
+	    else {
 		Debug.println('f', "Parent Directory: " + parentDirectoryName
 			+ " doesn't exist.");
 		return false;
 	    }
-
 	}
     }
 
@@ -372,75 +389,27 @@ class FileSystemReal extends FileSystem {
      * @return
      */
     public boolean removeDirectory(String pathName) {
-	Directory directory = mapOfDirectories.get(pathName);
-	if (directory == null) {
+	Directory directory;
+	directory = new Directory(NumDirEntries, this);
+	directory.fetchFrom(directoryFile);
+
+	if (directory.find(pathName) == -1) {
 	    Debug.println('f', "Directory :" + pathName
 		    + " doesn't exist in the File System.");
 	    return false;
 	} else {
 	    // Remove association of parent
 	    // if it's root directory then there's no parent.
+	    directory.remove(pathName);
 
-	    if (pathName != "/") {
-		int slashCount = getSlashCount(pathName);
-		Directory parentDirectory;
-		if (slashCount == 1) {
-		    parentDirectory = mapOfDirectories.get("/");
-
-		} else {
-		    // Get parent directory
-		    String parentDirectoryName = pathName.substring(0,
-			    pathName.lastIndexOf('/'));
-		    parentDirectory = mapOfDirectories.get(parentDirectoryName);
-
-		}
-		for (int i = 0; i < parentDirectory.getDirectories()
-			.size(); i++) {
-		    if (parentDirectory.getDirectories().get(i)
-			    .getDirectoryName().equalsIgnoreCase(pathName)) {
-			parentDirectory.getDirectories().remove(i);
-			break;
-		    }
+	    // remove all the directories in table array where pathname is a
+	    // substring in the name of the directory file.
+	    for (int i = 0; i < directory.getTable().length; i++) {
+		if (directory.getTable()[i].getName().contains(pathName)) {
+		    directory.remove(directory.getTable()[i].getName());
 		}
 	    }
-	    removeDirectoryHelper(directory);
 	    return true;
-	}
-    }
-
-    /**
-     * Free memory for all associated files in the directory. And recursively
-     * call the method for all sub directorues.
-     * 
-     * @param directory
-     */
-    private void removeDirectoryHelper(Directory directory) {
-
-	// First free all the table[i] elements in that directory and
-	// its child directories that contain the file. We need to free
-	// memory
-	// from the files that occupies it. We need to recursively call the
-	// free memory call to each subsequent child directory.
-	freeMemory(directory);
-
-	// call removeDirectory() for each of the child directories
-	for (int i = 0; i < directory.getDirectories().size(); i++) {
-	    removeDirectoryHelper(directory.getDirectories().get(i));
-	}
-	mapOfDirectories.put(directory.getDirectoryName(), null);
-    }
-
-    /**
-     * Method to free all the associated memory blocks on disk for the table of
-     * Directory Entry.
-     * 
-     * @param directory
-     */
-    private void freeMemory(Directory directory) {
-	// remove all the associated files in the table[] array
-	for (int i = 0; i < directory.getTable().length; i++) {
-	    removeFileFromDirectory(directory.getTable()[i].getName(),
-		    directory);
 	}
     }
 
@@ -552,24 +521,10 @@ class FileSystemReal extends FileSystem {
     // method to demonstrate that your extensions are working correctly.
 
     public void list() {
-	// Directory directory = new Directory(NumDirEntries, this);
-	Directory directory = mapOfDirectories.get("/");
-
-	// update the files from disk
+	Directory directory;
+	directory = new Directory(NumDirEntries, this);
 	directory.fetchFrom(directoryFile);
-	// Directory directory = mapOfDirectories.get("/");
-
-	listHelper(directory);
-    }
-
-    private void listHelper(Directory directory) {
-	Debug.println('f', "Listing all the file names in the directory:  "
-		+ directory.getDirectoryName());
 	directory.list();
-	for (int i = 0; i < directory.getDirectories().size(); i++) {
-	    listHelper(directory.getDirectories().get(i));
-	}
-
     }
 
     /**
@@ -605,9 +560,10 @@ class FileSystemReal extends FileSystem {
      * kinds of problems:
      */
     public void checkFileSystemForConsistency() {
-
-	Directory directory = mapOfDirectories.get("/"); // root directory
+	Directory directory;
+	directory = new Directory(NumDirEntries, this);
 	directory.fetchFrom(directoryFile);
+
 	int numDiskSectors = ((FileSystemReal) Nachos.fileSystem)
 		.getDiskDriver().getNumSectors();
 	OpenFile freeMapFile = ((FileSystemReal) Nachos.fileSystem)
@@ -634,22 +590,24 @@ class FileSystemReal extends FileSystem {
 	    // test if file header sector is set in bit map
 	    if (!freeMap.test(fileHdrSector)) {
 		Debug.println('f',
-			"Inconsistency found:" + "Sector for Header file :"
-				+ fileName + " marked free in bitmap: "
-				+ fileHdrSector);
+			"Inconsistency found:" + "Sector for :" + fileName
+				+ " marked free in bitmap: " + fileHdrSector);
 	    }
 
-	    FileHeader fileHdr = new FileHeader(this);
-	    fileHdr.fetchFrom(fileHdrSector);
+	    // only if the file is a 'file' and not a directory
+	    if (!fileName.contains("/")) {
+		FileHeader fileHdr = new FileHeader(this);
+		fileHdr.fetchFrom(fileHdrSector);
 
-	    // check if all data sectors for this file are marked occupied
-	    for (int j = 0; j < fileHdr.getDataSectors().length; j++) {
-		int sector = fileHdr.getDataSectors()[i];
-		if (sector != -1 && !freeMap.test(sector)) {
-		    Debug.println('f',
-			    "Inconsistency found: " + "Occupied sector : "
-				    + sector + " for file " + fileName
-				    + " marked free in Bitmap");
+		// check if all data sectors for this file are marked occupied
+		for (int j = 0; j < fileHdr.getDataSectors().length; j++) {
+		    int sector = fileHdr.getDataSectors()[i];
+		    if (sector != -1 && !freeMap.test(sector)) {
+			Debug.println('f',
+				"Inconsistency found: " + "Occupied sector : "
+					+ sector + " for file " + fileName
+					+ " marked free in Bitmap");
+		    }
 		}
 	    }
 	}
@@ -668,19 +626,23 @@ class FileSystemReal extends FileSystem {
 	for (int i = 0; i < directory.getTable().length; i++) {
 	    // sector location for file header
 	    int fileHdrSector = directory.getTable()[i].getSector();
+	    String fileName = directory.getTable()[i].getName(); // file name
 
 	    // update header sector in map.
 	    map.put(fileHdrSector, true);
 
-	    FileHeader fileHdr = new FileHeader(this);
-	    fileHdr.fetchFrom(fileHdrSector);
-
 	    // update all data sectors for the file.
-	    for (int j = 0; j < fileHdr.getDataSectors().length; j++) {
-		int sector = fileHdr.getDataSectors()[j];
-		if (sector == -1)
-		    break;
-		map.put(sector, true);
+	    // only if file is a 'file'
+	    if (!fileName.contains("/")) {
+		FileHeader fileHdr = new FileHeader(this);
+		fileHdr.fetchFrom(fileHdrSector);
+
+		for (int j = 0; j < fileHdr.getDataSectors().length; j++) {
+		    int sector = fileHdr.getDataSectors()[j];
+		    if (sector == -1)
+			break;
+		    map.put(sector, true);
+		}
 	    }
 	}
 	freeMap.checkFileSystem(map);
@@ -693,6 +655,7 @@ class FileSystemReal extends FileSystem {
 	for (int i = 0; i < directory.getTable().length; i++) {
 	    // sector location for file header
 	    int fileHdrSector = directory.getTable()[i].getSector();
+	    String fileName = directory.getTable()[i].getName(); // file name
 
 	    // update header sector in map.
 	    if (fileHdrSector > 0 && map.get(fileHdrSector) != null) {
@@ -703,18 +666,20 @@ class FileSystemReal extends FileSystem {
 	    }
 	    map.put(fileHdrSector, true);
 
-	    FileHeader fileHdr = new FileHeader(this);
-	    fileHdr.fetchFrom(fileHdrSector);
+	    if (!fileName.contains("/")) {
+		FileHeader fileHdr = new FileHeader(this);
+		fileHdr.fetchFrom(fileHdrSector);
 
-	    // update all data sectors for the file.
-	    for (int j = 0; j < fileHdr.getDataSectors().length; j++) {
-		int sector = fileHdr.getDataSectors()[i];
-		if (sector > -1 && map.get(sector) != null) {
-		    // Found Inconsistency
-		    Debug.println('f', "Sector no: " + sector
-			    + " referenced more than once.");
+		// update all data sectors for the file.
+		for (int j = 0; j < fileHdr.getDataSectors().length; j++) {
+		    int sector = fileHdr.getDataSectors()[i];
+		    if (sector > -1 && map.get(sector) != null) {
+			// Found Inconsistency
+			Debug.println('f', "Sector no: " + sector
+				+ " referenced more than once.");
+		    }
+		    map.put(sector, true);
 		}
-		map.put(sector, true);
 	    }
 	}
     }
