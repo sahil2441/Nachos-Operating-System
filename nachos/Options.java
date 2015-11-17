@@ -173,7 +173,7 @@ public class Options {
     public boolean CONSOLE_TEST = false;
 
     /** Should we run the filesystem test? */
-    public boolean FILESYS_TEST = false;
+    public boolean FILESYS_TEST = true;
 
     /** Should we run the serial port test? */
     public boolean SERIAL_TEST = false;

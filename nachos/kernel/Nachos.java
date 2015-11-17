@@ -150,12 +150,14 @@ public class Nachos implements Runnable {
 
     private void testFileSystem() {
 	// TODO: Add more stuff
-	for (int i = 0; i < 10; i++) {
-	    fileSystem.createDirectory("/" + i);
-	    fileSystem.create("File: " + i, 10);
-	    fileSystem.create("File: " + i + i, 10);
-	}
-	fileSystem.checkFileSystemForConsistency();
+	// fileSystem.create("File: ", 100000);
+
+	// for (int i = 0; i < 10; i++) {
+	// fileSystem.createDirectory("/" + i);
+	// fileSystem.create("File: " + i, 10);
+	// fileSystem.create("File: " + i + i, 10);
+	// }
+	// fileSystem.checkFileSystemForConsistency();
     }
 
     /**

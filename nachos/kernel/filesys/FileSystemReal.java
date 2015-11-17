@@ -115,6 +115,7 @@ class FileSystemReal extends FileSystem {
      * Map of Directories. It's to check which directories we have in our file
      * system.
      */
+    // TODO: Update map in memory so it works when disk is not formatted.
     private Map<String, Directory> mapOfDirectories;
 
     /**

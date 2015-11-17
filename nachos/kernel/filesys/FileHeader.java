@@ -48,7 +48,8 @@ class FileHeader {
     private final int NumDirect;
 
     /** Maximum file size that can be represented in the baseline system. */
-    private final int MaxFileSize;
+    private final int MaxFileSize = 138752; // (28 + 32 + 32*32)*128 = 138752
+					    // bytes.
 
     /** Number of bytes in the file. */
     private int numBytes;
@@ -65,6 +66,22 @@ class FileHeader {
     /** Disk sector size for the underlying filesystem. */
     private final int diskSectorSize;
 
+    // Long Files addition
+    /**
+     * Single indirect block that holds 32 sectors. First two sectors will be
+     * copied from last two entries the array of the array of 30 sectors.
+     */
+    private int[] singleIndirectBlock;
+
+    /** Size of the indirect block. */
+    private final int IndirectBlockSize = 32;
+
+    private int[][] doubleIndirectBlock;
+
+    private int columnIndex = 0;
+
+    private int rowIndex = 0;
+
     /**
      * Allocate a new "in-core" file header.
      * 
@@ -75,13 +92,26 @@ class FileHeader {
 	this.filesystem = filesystem;
 	diskSectorSize = filesystem.diskSectorSize;
 	NumDirect = ((diskSectorSize - 2 * 4) / 4); // (128-2*4)/4 =30
-	MaxFileSize = (NumDirect * diskSectorSize); // 30*128 =3840
+	// MaxFileSize = (NumDirect * diskSectorSize); // 30*128 =3840
 
 	dataSectors = new int[NumDirect];
 	// Safest to fill the table with garbage sector numbers,
 	// so that we error out quickly if we forget to initialize it properly.
 	for (int i = 0; i < NumDirect; i++)
 	    dataSectors[i] = -1;
+
+	// Initialize the single and double blocks
+	singleIndirectBlock = new int[IndirectBlockSize];
+	for (int i = 0; i < singleIndirectBlock.length; i++) {
+	    singleIndirectBlock[i] = -1;
+	}
+	doubleIndirectBlock = new int[IndirectBlockSize][IndirectBlockSize];
+	for (int i = 0; i < doubleIndirectBlock.length; i++) {
+	    for (int j = 0; j < doubleIndirectBlock[0].length; j++) {
+		doubleIndirectBlock[i][j] = -1;
+	    }
+
+	}
     }
 
     // the following methods deal with conversion between the on-disk and
@@ -132,19 +162,83 @@ class FileHeader {
      *            is size of the new file.
      */
     boolean allocate(BitMap freeMap, int fileSize) {
-	if (fileSize > MaxFileSize)
+	if (fileSize > MaxFileSize) {
 	    return false; // file too large
-	numBytes = fileSize;
-	numSectors = fileSize / diskSectorSize;
-	if (fileSize % diskSectorSize != 0)
-	    numSectors++;
+	}
+	// when data can be fit in the array of 30 sectors
+	else if (fileSize <= 3840) {
 
-	if (freeMap.numClear() < numSectors || NumDirect < numSectors)
-	    return false; // not enough space
+	    numBytes = fileSize;
+	    numSectors = fileSize / diskSectorSize;
+	    if (fileSize % diskSectorSize != 0)
+		numSectors++;
 
-	for (int i = 0; i < numSectors; i++)
-	    dataSectors[i] = freeMap.find();
-	return true;
+	    if (freeMap.numClear() < numSectors || NumDirect < numSectors)
+		return false; // not enough space
+
+	    for (int i = 0; i < numSectors; i++)
+		dataSectors[i] = freeMap.find();
+	    return true;
+	}
+	// when we need the single indirect block
+	else if (fileSize > 3840 && fileSize <= 7680) {
+
+	    numBytes = fileSize;
+	    numSectors = fileSize / diskSectorSize;
+	    if (fileSize % diskSectorSize != 0)
+		numSectors++;
+
+	    if (freeMap.numClear() < numSectors)
+		return false; // not enough space
+
+	    for (int i = 0; i < dataSectors.length; i++) {
+		dataSectors[i] = freeMap.find();
+	    }
+	    int sectorsForIndirectBlock = numSectors - dataSectors.length;
+	    singleIndirectBlock[0] = dataSectors[28];
+	    singleIndirectBlock[1] = dataSectors[29];
+
+	    for (int i = 2; i < sectorsForIndirectBlock; i++) {
+		singleIndirectBlock[i] = freeMap.find();
+	    }
+	    return true;
+	}
+	// when we need both indirect blocks
+	else {
+	    numBytes = fileSize;
+	    numSectors = fileSize / diskSectorSize;
+	    if (fileSize % diskSectorSize != 0)
+		numSectors++;
+
+	    if (freeMap.numClear() < numSectors)
+		return false; // not enough space
+
+	    for (int i = 0; i < dataSectors.length; i++) {
+		dataSectors[i] = freeMap.find();
+	    }
+	    singleIndirectBlock[0] = dataSectors[28];
+	    singleIndirectBlock[1] = dataSectors[29];
+
+	    for (int i = 2; i < singleIndirectBlock.length; i++) {
+		singleIndirectBlock[i] = freeMap.find();
+	    }
+
+	    int sectorsForDoubleIndirectBlock = numSectors - dataSectors.length
+		    - singleIndirectBlock.length + 2;
+	    int count = sectorsForDoubleIndirectBlock;
+	    outerloop: for (int i = 0; i < doubleIndirectBlock.length; i++) {
+		for (int j = 0; j < doubleIndirectBlock[0].length; j++) {
+		    if (count == 0) {
+			this.rowIndex = i;
+			this.columnIndex = j;
+			break outerloop;
+		    }
+		    doubleIndirectBlock[i][j] = freeMap.find();
+		    count--;
+		}
+	    }
+	    return true;
+	}
     }
 
     /**
@@ -268,8 +362,55 @@ class FileHeader {
 	    sectorsAllocated = additionalSectorsRequired;
 	}
 
-	for (int i = numSectors; i < numSectors + sectorsAllocated; i++) {
-	    dataSectors[i] = freeMap.find();
+	int numSectorsNew = numSectors + sectorsAllocated;
+	// based on sectors allocated we update the data
+
+	// TODO
+	// use only dataTable array in this case
+	if (numSectorsNew <= 28) {
+	    for (int i = numSectors; i < numSectors + sectorsAllocated; i++) {
+		dataSectors[i] = freeMap.find();
+	    }
+
+	} // use single array
+	else if (numSectorsNew <= 60) {
+
+	    int sectorsForIndirectBlock = numSectors - dataSectors.length;
+	    singleIndirectBlock[0] = dataSectors[28];
+	    singleIndirectBlock[1] = dataSectors[29];
+
+	    for (int i = 2; i < sectorsForIndirectBlock; i++) {
+		singleIndirectBlock[i] = freeMap.find();
+	    }
+
+	} // also use double array
+	else {
+	    singleIndirectBlock[0] = dataSectors[28];
+	    singleIndirectBlock[1] = dataSectors[29];
+
+	    int sectorsForDoubleIndirectBlock = numSectorsNew
+		    - dataSectors.length - singleIndirectBlock.length + 2;
+	    int noOfRows = (sectorsForDoubleIndirectBlock
+		    - sectorsForDoubleIndirectBlock % 32) / 32;
+
+	    int count = sectorsForDoubleIndirectBlock;
+	    for (int j = this.columnIndex; j < 32; j++) {
+		// fill the entire column for these many rows.
+		if (count == 0)
+		    break;
+		doubleIndirectBlock[this.rowIndex][j] = freeMap.find();
+		count--;
+	    }
+
+	    outerloop: for (int i = this.rowIndex + 1; i < noOfRows; i++) {
+		for (int j = 0; j < 32; j++) {
+		    // fill the entire column for these many rows.
+		    if (count == 0)
+			break outerloop;
+		    doubleIndirectBlock[i][j] = freeMap.find();
+		    count--;
+		}
+	    }
 	}
 
 	// update numsectors
@@ -280,6 +421,22 @@ class FileHeader {
 
 	Debug.println('f', "Additional sectors allocated: " + sectorsAllocated);
 	return sectorsAllocated;
+    }
+
+    private int getStartingColIndex(int startingRowIndex) {
+	for (int i = 0; i < doubleIndirectBlock[0].length; i++) {
+	    if (doubleIndirectBlock[startingRowIndex][i] == -1)
+		return i;
+	}
+	return doubleIndirectBlock[0].length;
+    }
+
+    private int getStartingRowIndex() {
+	for (int i = 0; i < doubleIndirectBlock.length; i++) {
+	    if (doubleIndirectBlock[i][0] == -1)
+		return i == 0 ? 0 : i - 1;
+	}
+	return doubleIndirectBlock.length;
     }
 
     /**

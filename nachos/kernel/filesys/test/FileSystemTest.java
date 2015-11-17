@@ -175,8 +175,9 @@ public class FileSystemTest implements Runnable {
 	}
 
 	// write more than 200 bytes
+	// TODO Test for 5000 bytes
 
-	// byte[] arr = new byte[500];
+	// byte[] arr = new byte[5000];
 	// for (int j = 0; j < arr.length; j++) {
 	// arr[j] = 50;
 	// }
