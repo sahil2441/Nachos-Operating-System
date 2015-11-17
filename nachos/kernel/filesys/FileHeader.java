@@ -273,10 +273,10 @@ class FileHeader {
 	}
 
 	// update numsectors
-	numSectors += sectorsAllocated;
+	this.numSectors += sectorsAllocated;
 
 	// update filesize
-	numBytes = numSectors * diskSectorSize;
+	this.numBytes = numSectors * diskSectorSize;
 
 	Debug.println('f', "Additional sectors allocated: " + sectorsAllocated);
 	return sectorsAllocated;
