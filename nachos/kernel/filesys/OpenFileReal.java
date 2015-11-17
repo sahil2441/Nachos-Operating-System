@@ -249,7 +249,7 @@ class OpenFileReal implements OpenFile {
 		    // update
 		    firstSector = (int) position / diskSectorSize;
 		    lastSector = hdr.getNumSectors() - 1;
-		    numSectors = hdr.getNumSectors() - 1;
+		    numSectors = hdr.getNumSectors();
 		}
 
 	    }

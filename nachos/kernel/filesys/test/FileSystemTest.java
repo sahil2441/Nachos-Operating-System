@@ -152,7 +152,7 @@ public class FileSystemTest implements Runnable {
     /** Total size of the test file. */
     // private static final int FileSize = ContentSize * 300;
 
-    private static final int FileSize = 50;
+    private static final int FileSize = 128;
 
     /**
      * Write the test file for the performance test.
@@ -176,10 +176,11 @@ public class FileSystemTest implements Runnable {
 
 	// write more than 200 bytes
 
-	byte[] arr = new byte[4000];
+	byte[] arr = new byte[384];
 	for (int j = 0; j < arr.length; j++) {
 	    arr[j] = 50;
 	}
+
 	numBytes = openFile.write(arr, 0, arr.length);
 	if (numBytes < 10) {
 	    Debug.printf('+', "Perf test: unable to write %s\n", FileName);
