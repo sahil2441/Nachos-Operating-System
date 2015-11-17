@@ -96,14 +96,16 @@ class FileSystemStub extends FileSystem {
 
     @Override
     public boolean createDirectory(String pathName) {
-	// TODO Auto-generated method stub
 	return false;
     }
 
     @Override
     public boolean removeDirectory(String directoryName) {
-	// TODO Auto-generated method stub
 	return false;
+    }
+
+    @Override
+    public void checkFileSystemForConsistency() {
     }
 
 }

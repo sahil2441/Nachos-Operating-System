@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import nachos.Debug;
+import nachos.kernel.Nachos;
 import nachos.kernel.devices.DiskDriver;
 
 /**
@@ -266,6 +267,7 @@ class FileSystemReal extends FileSystem {
      * @return true if the file was successfully created, otherwise false.
      */
     public boolean create(String name, long initialSize) {
+	// TODO: Check directory based on path
 	Directory directory;
 	BitMap freeMap;
 	FileHeader hdr;
@@ -302,6 +304,10 @@ class FileSystemReal extends FileSystem {
 	    }
 	}
 	Debug.println('+', "File system creation status: " + success);
+	if (success) {
+	    // update the map is file added successfully
+	    mapOfDirectories.put("/", directory);
+	}
 	return success;
     }
 
@@ -358,13 +364,6 @@ class FileSystemReal extends FileSystem {
 	    }
 
 	}
-    }
-
-    private void allocateSpaceForDirectory(Directory directory) {
-	// TODO Copy the actions for a root directory from the constructor of
-	// this class. We need to allocate space for this new directory as well.
-	// May be ???
-
     }
 
     /**
@@ -606,9 +605,55 @@ class FileSystemReal extends FileSystem {
      * kinds of problems:
      */
     public void checkFileSystemForConsistency() {
+
+	Directory directory = mapOfDirectories.get("/"); // root directory
+	directory.fetchFrom(directoryFile);
+	int numDiskSectors = ((FileSystemReal) Nachos.fileSystem)
+		.getDiskDriver().getNumSectors();
+	OpenFile freeMapFile = ((FileSystemReal) Nachos.fileSystem)
+		.getFreeMapFile();
+
+	BitMap freeMap;
+
+	freeMap = new BitMap(numDiskSectors);
+	freeMap.fetchFrom(freeMapFile);
+
+	// TODO Also iterate thorough other directories if feature implemented
 	// part 1
 	// iterate through all the sector numbers in the datasector array and
 	// check the corresponding entry in the bitmap(=freeMap).
+
+	Debug.println('f', "Checking for inconsistency: "
+		+ "Disk sectors that are used by files (or file headers), "
+		+ "but that are also marked as --free-- in the bitmap.");
+	for (int i = 0; i < directory.getTable().length; i++) {
+	    int fileHdrSector = directory.getTable()[i].getSector(); // sector
+	    // location for
+	    // file header
+	    String fileName = directory.getTable()[i].getName(); // file name
+
+	    // test if file header sector is set in bit map
+	    if (!freeMap.test(fileHdrSector)) {
+		Debug.println('f',
+			"Inconsistency found:" + "Sector for Header file :"
+				+ fileName + " marked free in bitmap: "
+				+ fileHdrSector);
+	    }
+
+	    FileHeader fileHdr = new FileHeader(this);
+	    fileHdr.fetchFrom(fileHdrSector);
+
+	    // check if all data sectors for this file are marked occupied
+	    for (int j = 0; j < fileHdr.getDataSectors().length; j++) {
+		int sector = fileHdr.getDataSectors()[i];
+		if (sector != -1 && !freeMap.test(sector)) {
+		    Debug.println('f',
+			    "Inconsistency found: " + "Occupied sector : "
+				    + sector + " for file " + fileName
+				    + " marked free in Bitmap");
+		}
+	    }
+	}
 
 	// part 2
 	// create a map<integer, boolean> that records the sector occupied by

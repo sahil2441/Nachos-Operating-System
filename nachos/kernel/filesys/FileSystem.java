@@ -62,6 +62,12 @@ public abstract class FileSystem {
      */
     public abstract boolean removeDirectory(String directoryName);
 
+    // Added for Qn 4
+    /**
+     * Checks the filesystem for consistency
+     */
+    public abstract void checkFileSystemForConsistency();
+
     /**
      * Open the file with the specified name and return an OpenFile object that
      * provides access to the file contents.

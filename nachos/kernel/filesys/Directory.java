@@ -85,6 +85,7 @@ class Directory {
     Directory(int size, FileSystemReal filesystem) {
 	this.filesystem = filesystem;
 	table = new DirectoryEntry[size];
+	this.directories = new ArrayList<>();
 	tableSize = size;
 	for (int i = 0; i < tableSize; i++) {
 	    table[i] = new DirectoryEntry();
@@ -207,6 +208,9 @@ class Directory {
 	// table array and copy everything from first array into second.
 	DirectoryEntry[] newtable = new DirectoryEntry[table.length * 2];
 
+	// update the table length
+	tableSize = newtable.length;
+
 	// copy index at which we need to insert
 	int position = table.length;
 
@@ -276,21 +280,6 @@ class Directory {
 
     public void setDirectoryName(String directoryName) {
 	this.pathName = directoryName;
-    }
-
-    /**
-     * Returns the index of free
-     * 
-     * @return
-     */
-    public int getFreeDirectoryIndex() {
-	// TODO Auto-generated method stub
-	return 0;
-    }
-
-    public boolean createNewDirectory() {
-
-	return false;
     }
 
 }

@@ -335,4 +335,12 @@ class FileHeader {
     public void setNumSectors(int numSectors) {
 	this.numSectors = numSectors;
     }
+
+    public int[] getDataSectors() {
+	return dataSectors;
+    }
+
+    public void setDataSectors(int[] dataSectors) {
+	this.dataSectors = dataSectors;
+    }
 }

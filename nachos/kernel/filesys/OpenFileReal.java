@@ -195,8 +195,6 @@ class OpenFileReal implements OpenFile {
      */
     public int writeAt(byte from[], int index, int numBytes, long position) {
 
-	// TODO : Test the implementation of this method using FileTest
-
 	int fileLength = hdr.fileLength();
 	// Basic check: Return if fileLength >= 3840(=maxfileSize).
 	if (!(fileLength < hdr.getMaxFileSize())) {
