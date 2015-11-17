@@ -10,6 +10,10 @@
 
 package nachos.kernel.userprog.test;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+
 import nachos.Debug;
 import nachos.Options;
 import nachos.kernel.Nachos;
@@ -32,6 +36,9 @@ public class ProgTest implements Runnable {
     /** The name of the program to execute. */
     private String execName;
 
+    /** Transfer data in small chunks, just to be difficult. */
+    private static final int TransferSize = 10;
+
     /**
      * Start the test by creating a new address space and user thread, then
      * arranging for the new thread to begin executing the run() method of this
@@ -48,7 +55,74 @@ public class ProgTest implements Runnable {
 	execName = filename;
 	AddrSpace space = new AddrSpace();
 	UserThread t = new UserThread(name, this, space);
+	copyUserProgramIntoFileSystem(filename);
 	Nachos.scheduler.readyToRun(t);
+    }
+
+    /**
+     * If file system is an instance of FileSystemReal then copy user program
+     * file into nachos memory.
+     * 
+     * @param filename
+     */
+    private void copyUserProgramIntoFileSystem(String filename) {
+	copy(filename, filename);
+    }
+
+    /**
+     * Copy the contents of the host file "from" to the Nachos file "to"
+     *
+     * @param from
+     *            The name of the file to be copied from the host filesystem.
+     * @param to
+     *            The name of the file to create on the Nachos filesystem.
+     */
+    private void copy(String from, String to) {
+	File fp;
+	FileInputStream fs;
+	OpenFile openFile;
+	int amountRead;
+	long fileLength;
+	byte buffer[];
+
+	// Open UNIX file
+	fp = new File(from);
+	if (!fp.exists()) {
+	    Debug.printf('+', "Copy: couldn't open input file %s\n", from);
+	    return;
+	}
+
+	// Figure out length of UNIX file
+	fileLength = fp.length();
+
+	// Create a Nachos file of the same length
+	Debug.printf('f', "Copying file %s, size %d, to file %s\n", from,
+		new Long(fileLength), to);
+	if (!Nachos.fileSystem.create(to, (int) fileLength)) {
+	    // Create Nachos file
+	    Debug.printf('+', "Copy: couldn't create output file %s\n", to);
+	    return;
+	}
+
+	openFile = Nachos.fileSystem.open(to);
+	Debug.ASSERT(openFile != null);
+
+	// Copy the data in TransferSize chunks
+	buffer = new byte[TransferSize];
+	try {
+	    fs = new FileInputStream(fp);
+	    while ((amountRead = fs.read(buffer)) > 0)
+		openFile.write(buffer, 0, amountRead);
+	} catch (IOException e) {
+	    Debug.print('+', "Copy: data copy failed\n");
+	    return;
+	}
+	// Close the UNIX and the Nachos files
+	// delete openFile;
+	try {
+	    fs.close();
+	} catch (IOException e) {
+	}
     }
 
     /**
@@ -61,7 +135,7 @@ public class ProgTest implements Runnable {
 	OpenFile executable;
 
 	if ((executable = Nachos.fileSystem.open(execName)) == null) {
-	    // TODO : copy implementation of file system stub open () method.
+	    // TODO : use -cp action from test.
 	    Debug.println('+', "Unable to open executable file: " + execName);
 	    Nachos.scheduler.finishThread();
 	    return;
