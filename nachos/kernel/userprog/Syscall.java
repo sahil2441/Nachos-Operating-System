@@ -494,6 +494,7 @@ public class Syscall {
 		    "Couldn't create a new directory with Mkdir Command at: "
 			    + directoryName);
 	}
+	Nachos.fileSystem.list();
     }
 
     public static void removeDirectory(String directoryName) {
@@ -505,6 +506,6 @@ public class Syscall {
 		    "Couldn't remove the directory with Rmdir Command at: "
 			    + directoryName);
 	}
+	Nachos.fileSystem.list();
     }
-
 }

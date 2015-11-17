@@ -311,12 +311,9 @@ class FileSystemReal extends FileSystem {
      */
     public boolean createDirectory(String pathName) {
 
-	if (pathName == "/")
+	if (pathName.equalsIgnoreCase("/") || pathName.equalsIgnoreCase(""))
 	    return false;
 	Directory childDirectory = new Directory(NumDirEntries, this, pathName);
-
-	// TODO Check if required??
-	allocateSpaceForDirectory(childDirectory);
 
 	// check parent directory if it exists in map
 	// if yes then extract from map and put it in the list
