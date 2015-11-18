@@ -81,7 +81,17 @@ MAJOR CHANGES MADE:
 	I've created the method 
 	nachos.kernel.filesys.FileSystemReal.checkFileSystemForConsistency()
 	
-	in the FileSystemReal class that checks the filesystem for consistency.
+	in the FileSystemReal class that checks the file system for consistency.
 		
+###############################
+
+--- Filesystem Exerciser
+	The method
+	nachos.kernel.Nachos.testFileSystem()
 	
+	executes several creates, deletes, reads, writes and extends a number of 
+	files and directories, then checks the filesystem structure to 
+	make sure that it has not been corrupted.	
+	
+###############################
 

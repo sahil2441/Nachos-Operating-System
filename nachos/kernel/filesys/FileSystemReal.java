@@ -726,15 +726,6 @@ class FileSystemReal extends FileSystem {
 	    int fileHdrSector = directory.getTable()[i].getSector();
 	    String fileName = directory.getTable()[i].getName(); // file name
 
-	    // update header sector in map.
-	    if (fileHdrSector > 0 && map.get(fileHdrSector) != null) {
-		// Found Inconsistency
-		Debug.println('f',
-			"Part III: Sector no: " + fileHdrSector
-				+ " referenced more than once."
-				+ "Referenced by File: " + fileName);
-	    }
-	    map.put(fileHdrSector, true);
 	    FileHeader fileHdr = new FileHeader(this);
 	    fileHdr.fetchFrom(fileHdrSector);
 
@@ -778,6 +769,27 @@ class FileSystemReal extends FileSystem {
 		    }
 		}
 	    }
+	}
+
+	// part 4
+	// Multiple directory entries that refer to the same file header.
+
+	map = new HashMap<>();
+	for (int i = 0; i < directory.getTable().length; i++) {
+	    // sector location for file header
+	    int fileHdrSector = directory.getTable()[i].getSector();
+	    String fileName = directory.getTable()[i].getName(); // file name
+
+	    // update header sector in map.
+	    if (map.get(fileHdrSector) != null) {
+		// Found Inconsistency
+		Debug.println('f',
+			"Part IV: File Header Sector no: " + fileHdrSector
+				+ " referenced by more than one Directory Entry."
+				+ "Referenced by File: " + fileName);
+
+	    }
+	    map.put(fileHdrSector, true);
 	}
     }
 
