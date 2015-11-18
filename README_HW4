@@ -5,3 +5,83 @@
 ##################################################################
 
 MAJOR CHANGES MADE:
+
+---	Extensible Files
+	Modified the method
+	nachos.kernel.filesys.OpenFileReal.writeAt(byte[], int, int, long)
+	
+	and created a new method:
+	nachos.kernel.filesys.FileHeader.allocateAdditionalSectors(int)
+	
+	that allocates extra memory if we wish to write beyond the file.
+	
+	Also modified the method:
+	nachos.kernel.filesys.Directory.add(String, int)
+	
+	to implement this feature where if an attempt is made to create more
+	than 10 files the directory automatically extends as required.
+	
+###############################
+
+---	Multiple Directories/Pathnames
+	Created a new syscall Mkdir() and Rmdir() that takes name of the directory as an argument.
+	
+	To run the user program using File System real, we first need to load the user program into
+	the nachos memory. The following method has been created for this feature:
+	nachos.kernel.userprog.test.ProgTest.copyUserProgramIntoFileSystem(String)
+	
+	Enter the following in the run arguments:
+	-d f -f -x test/Mkdir_test	 
+	
+	It creates the following directories:
+	Directory Name: /
+	Directory Name: /1
+	Directory Name: /1/1
+	Directory Name: /2
+	Directory Name: /3
+	Directory Name: /4
+	
+	and then removes the directory /1 using Rmdir(), which automatically also removes /1/1
+	since  /1/1 is the child directory of /1.
+	
+	I've also modified the method to list the name of all the files and directories:
+	nachos.kernel.filesys.FileSystemReal.list()
+	
+	and this method is called from 
+	nachos.kernel.userprog.Syscall.makeDirectory(String)
+	
+	and
+	nachos.kernel.userprog.Syscall.removeDirectory(String)
+	
+	so that every time a directory is created or removed we list the files and directory. 
+
+###############################
+
+---	Long Files
+	I've added an array of size 32 for the single indirect block
+	nachos.kernel.filesys.FileHeader.singleIndirectBlock
+	
+	and a 2D array of size 32*32 for double indirect block
+	nachos.kernel.filesys.FileHeader.doubleIndirectBlock
+	
+	I've modified the method 
+	nachos.kernel.filesys.FileHeader.allocate(BitMap, int)
+	
+	that now can increase the maximum size of a NACHOS file
+	to (28 + 32 + 32*32)*128 = 138752 bytes.
+	
+	The method:
+	nachos.kernel.filesys.FileHeader.allocateAdditionalSectors(int)
+	
+	has also been modified accordingly to increase the size of the file, if required.
+
+###############################
+
+---	Test Your Implementation
+	I've created the method 
+	nachos.kernel.filesys.FileSystemReal.checkFileSystemForConsistency()
+	
+	in the FileSystemReal class that checks the filesystem for consistency.
+		
+	
+

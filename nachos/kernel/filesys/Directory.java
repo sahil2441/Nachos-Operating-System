@@ -236,8 +236,14 @@ class Directory {
      */
     void list() {
 	for (int i = 0; i < tableSize; i++)
-	    if (table[i].inUse())
-		System.out.println(table[i].getName());
+	    if (table[i].inUse()) {
+		String name = table[i].getName();
+		if (name.contains("/")) {
+		    System.out.println("Directory Name: " + name);
+		} else {
+		    System.out.println("File Name: " + name);
+		}
+	    }
     }
 
     /**

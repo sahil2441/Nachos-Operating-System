@@ -499,4 +499,21 @@ class FileHeader {
     public void setDataSectors(int[] dataSectors) {
 	this.dataSectors = dataSectors;
     }
+
+    public int[] getSingleIndirectBlock() {
+	return singleIndirectBlock;
+    }
+
+    public void setSingleIndirectBlock(int[] singleIndirectBlock) {
+	this.singleIndirectBlock = singleIndirectBlock;
+    }
+
+    public int[][] getDoubleIndirectBlock() {
+	return doubleIndirectBlock;
+    }
+
+    public void setDoubleIndirectBlock(int[][] doubleIndirectBlock) {
+	this.doubleIndirectBlock = doubleIndirectBlock;
+    }
+
 }

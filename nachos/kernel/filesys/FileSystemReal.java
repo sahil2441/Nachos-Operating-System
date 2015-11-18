@@ -292,6 +292,7 @@ class FileSystemReal extends FileSystem {
 		    success = true;
 		    // everything worked, flush all changes back to disk
 		    hdr.writeBack(sector);
+		    // TODO: check this
 		    directory.writeBack(directoryFile);
 		    freeMap.writeBack(freeMapFile);
 		}
@@ -392,23 +393,31 @@ class FileSystemReal extends FileSystem {
 	Directory directory;
 	directory = new Directory(NumDirEntries, this);
 	directory.fetchFrom(directoryFile);
+	BitMap freeMap;
+	freeMap = new BitMap(numDiskSectors);
+	freeMap.fetchFrom(freeMapFile);
 
 	if (directory.find(pathName) == -1) {
 	    Debug.println('f', "Directory :" + pathName
 		    + " doesn't exist in the File System.");
 	    return false;
 	} else {
-	    // Remove association of parent
-	    // if it's root directory then there's no parent.
 	    directory.remove(pathName);
 
 	    // remove all the directories in table array where pathname is a
 	    // substring in the name of the directory file.
 	    for (int i = 0; i < directory.getTable().length; i++) {
-		if (directory.getTable()[i].getName().contains(pathName)) {
+		if (directory.getTable()[i].getName() != null
+			&& directory.getTable()[i].getName()
+				.contains(pathName)) {
 		    directory.remove(directory.getTable()[i].getName());
+		    freeMap.clear(directory.getTable()[i].getSector());
 		}
 	    }
+	    // everything worked, flush all changes back to disk
+	    directory.writeBack(directoryFile);
+	    freeMap.writeBack(freeMapFile);
+
 	    return true;
 	}
     }
@@ -575,6 +584,10 @@ class FileSystemReal extends FileSystem {
 	freeMap.fetchFrom(freeMapFile);
 
 	// part 1
+
+	// Disk sectors that are used by files (or file headers), but that are
+	// also marked as "free" in the bitmap.
+
 	// iterate through all the sector numbers in the datasector array and
 	// check the corresponding entry in the bitmap(=freeMap).
 
@@ -590,34 +603,68 @@ class FileSystemReal extends FileSystem {
 	    // test if file header sector is set in bit map
 	    if (!freeMap.test(fileHdrSector)) {
 		Debug.println('f',
-			"Inconsistency found:" + "Sector for :" + fileName
-				+ " marked free in bitmap: " + fileHdrSector);
+			"Part 1: Inconsistency found:" + "Sector for :"
+				+ fileName + " marked free in bitmap: "
+				+ fileHdrSector);
 	    }
 
 	    // only if the file is a 'file' and not a directory
-	    if (!fileName.contains("/")) {
-		FileHeader fileHdr = new FileHeader(this);
-		fileHdr.fetchFrom(fileHdrSector);
+	    FileHeader fileHdr = new FileHeader(this);
+	    fileHdr.fetchFrom(fileHdrSector);
 
+	    if (fileHdr != null && !fileName.contains("/")) {
 		// check if all data sectors for this file are marked occupied
 		for (int j = 0; j < fileHdr.getDataSectors().length; j++) {
-		    int sector = fileHdr.getDataSectors()[i];
-		    if (sector != -1 && !freeMap.test(sector)) {
-			Debug.println('f',
-				"Inconsistency found: " + "Occupied sector : "
-					+ sector + " for file " + fileName
-					+ " marked free in Bitmap");
+		    int sector = fileHdr.getDataSectors()[j];
+		    if (sector > 0 && !freeMap.test(sector)) {
+			Debug.println('f', "Part 1: Inconsistency found: "
+				+ "Occupied sector : " + sector + " for file "
+				+ fileName + " marked free in Bitmap");
+		    }
+		}
+
+		// check all single indirect block
+		for (int j = 0; j < fileHdr
+			.getSingleIndirectBlock().length; j++) {
+		    int sector = fileHdr.getSingleIndirectBlock()[j];
+		    if (sector > 0 && !freeMap.test(sector)) {
+			Debug.println('f', "Part 1: Inconsistency found: "
+				+ "Occupied sector : " + sector + " for file "
+				+ fileName + " marked free in Bitmap");
+		    }
+		}
+
+		// check all double indirect block
+		outerloop: for (int j = 0; j < fileHdr
+			.getDoubleIndirectBlock().length; j++) {
+		    for (int k = 0; k < fileHdr
+			    .getDoubleIndirectBlock()[0].length; k++) {
+
+			int sector = fileHdr.getDoubleIndirectBlock()[j][k];
+			if (sector == -1)
+			    break outerloop;
+			if (sector > 0 && !freeMap.test(sector)) {
+			    Debug.println('f',
+				    "Part 1: Inconsistency found: "
+					    + "Occupied sector : " + sector
+					    + " for file " + fileName
+					    + " marked free in Bitmap");
+			}
 		    }
 		}
 	    }
 	}
 
 	// part 2
+
+	// Disk sectors that are not used by any files (or file headers), but
+	// that are marked as "in use" in the bitmap.
+
 	// create a map<integer, boolean> that records the sector occupied by
 	// files. Then iterate through the bitmap and check if corresponding
 	// entry in the map is true.
 
-	// For ever sector occupied by any file's data sector update the map as
+	// For every sector occupied by any file's data sector update the map as
 	// true. Then go through the bit map and check every corresponding entry
 	// in the hash map.
 
@@ -626,28 +673,50 @@ class FileSystemReal extends FileSystem {
 	for (int i = 0; i < directory.getTable().length; i++) {
 	    // sector location for file header
 	    int fileHdrSector = directory.getTable()[i].getSector();
-	    String fileName = directory.getTable()[i].getName(); // file name
 
 	    // update header sector in map.
 	    map.put(fileHdrSector, true);
 
 	    // update all data sectors for the file.
 	    // only if file is a 'file'
-	    if (!fileName.contains("/")) {
-		FileHeader fileHdr = new FileHeader(this);
-		fileHdr.fetchFrom(fileHdrSector);
+	    FileHeader fileHdr = new FileHeader(this);
+	    fileHdr.fetchFrom(fileHdrSector);
+	    String fileName = directory.getTable()[i].getName(); // file name
 
+	    if (fileHdr != null && !fileName.contains("/")) {
+
+		// iterate all three -- data sector, single block, double block
 		for (int j = 0; j < fileHdr.getDataSectors().length; j++) {
 		    int sector = fileHdr.getDataSectors()[j];
 		    if (sector == -1)
 			break;
 		    map.put(sector, true);
 		}
+		for (int j = 0; j < fileHdr
+			.getSingleIndirectBlock().length; j++) {
+		    int sector = fileHdr.getSingleIndirectBlock()[j];
+		    if (sector == -1)
+			break;
+		    map.put(sector, true);
+		}
+
+		outerloop: for (int j = 0; j < fileHdr
+			.getDoubleIndirectBlock().length; j++) {
+		    for (int k = 0; k < fileHdr
+			    .getDoubleIndirectBlock()[0].length; k++) {
+			if (fileHdr.getDoubleIndirectBlock()[j][k] == -1) {
+			    break outerloop;
+			}
+			map.put(fileHdr.getDoubleIndirectBlock()[j][k], true);
+		    }
+		}
 	    }
 	}
 	freeMap.checkFileSystem(map);
 
 	// part 3
+	// Disk sectors that are referenced by more than one file header.
+
 	// similar to part 2. we create a map for sector entries and check if
 	// the entry we are seeing in map should be already present.
 
@@ -660,25 +729,53 @@ class FileSystemReal extends FileSystem {
 	    // update header sector in map.
 	    if (fileHdrSector > 0 && map.get(fileHdrSector) != null) {
 		// Found Inconsistency
-		Debug.println('f', "File Header Sector no: " + fileHdrSector
-			+ " referenced more than once." + "Referenced by: "
-			+ directory.getTable()[i].getName());
+		Debug.println('f',
+			"Part III: Sector no: " + fileHdrSector
+				+ " referenced more than once."
+				+ "Referenced by File: " + fileName);
 	    }
 	    map.put(fileHdrSector, true);
+	    FileHeader fileHdr = new FileHeader(this);
+	    fileHdr.fetchFrom(fileHdrSector);
 
-	    if (!fileName.contains("/")) {
-		FileHeader fileHdr = new FileHeader(this);
-		fileHdr.fetchFrom(fileHdrSector);
+	    if (fileHdr != null && !fileName.contains("/")) {
 
 		// update all data sectors for the file.
 		for (int j = 0; j < fileHdr.getDataSectors().length; j++) {
 		    int sector = fileHdr.getDataSectors()[i];
 		    if (sector > -1 && map.get(sector) != null) {
 			// Found Inconsistency
-			Debug.println('f', "Sector no: " + sector
+			Debug.println('f', "Part III: Sector no: " + sector
 				+ " referenced more than once.");
 		    }
 		    map.put(sector, true);
+		}
+
+		// check for indirect block
+		for (int j = 0; j < fileHdr
+			.getSingleIndirectBlock().length; j++) {
+		    int sector = fileHdr.getSingleIndirectBlock()[j];
+		    if (sector > -1 && map.get(sector) != null) {
+			// Found Inconsistency
+			Debug.println('f', "Part III: Sector no: " + sector
+				+ " referenced more than once.");
+		    }
+		    map.put(sector, true);
+		}
+
+		// check for double block
+		for (int j = 0; j < fileHdr
+			.getDoubleIndirectBlock().length; j++) {
+		    for (int k = 0; k < fileHdr
+			    .getDoubleIndirectBlock()[0].length; k++) {
+			int sector = fileHdr.getDoubleIndirectBlock()[j][k];
+			if (sector > -1 && map.get(sector) != null) {
+			    // Found Inconsistency
+			    Debug.println('f', "Part III: Sector no: " + sector
+				    + " referenced more than once.");
+			}
+			map.put(sector, true);
+		    }
 		}
 	    }
 	}

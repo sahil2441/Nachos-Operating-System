@@ -4,6 +4,7 @@ int main()
 {
 	int i;
 	Mkdir("/1");
+	Mkdir("/1/1");
 	Mkdir("/2");
 	Mkdir("/3");
 	Mkdir("/4");

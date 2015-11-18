@@ -198,9 +198,9 @@ public class BitMap {
 	for (int i = 0; i < numBits; i++) {
 	    if (test(i) && mapFileSectors.get(i) == null) {
 		// Found Inconsistency
-		Debug.println('f', "Found Inconsistency: " + "Sector number : "
-			+ i
-			+ " marked occupied in Bitmap but not occupied by any file.");
+		Debug.println('f', "Part 2: Found Inconsistency: "
+			+ "Sector number : " + i
+			+ " marked occupied in Bitmap but not occupied by any file or directory.");
 	    }
 	}
     }
