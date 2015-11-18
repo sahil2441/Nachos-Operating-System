@@ -119,6 +119,8 @@ class Directory {
      *            The file to contain the new directory contents.
      */
     void writeBack(OpenFile file) {
+
+	// for file table
 	byte buffer[] = new byte[tableSize * DirectoryEntry.sizeOf()];
 	int pos = 0;
 	for (int i = 0; i < tableSize; i++) {

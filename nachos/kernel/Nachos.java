@@ -30,6 +30,7 @@ import nachos.kernel.devices.test.ConsoleTest;
 import nachos.kernel.devices.test.NetworkTest;
 import nachos.kernel.devices.test.SerialTest;
 import nachos.kernel.filesys.FileSystem;
+import nachos.kernel.filesys.OpenFile;
 import nachos.kernel.filesys.test.FileSystemTest;
 import nachos.kernel.threads.Scheduler;
 import nachos.kernel.threads.TaskManager;
@@ -149,14 +150,48 @@ public class Nachos implements Runnable {
     }
 
     private void testFileSystem() {
-	// TODO: Testing Pending
-	fileSystem.create("File: ", 1000);
-
 	for (int i = 0; i < 10; i++) {
 	    fileSystem.createDirectory("/" + i);
-	    fileSystem.create("File: " + i, 1000 * i + 10);
+	    fileSystem.create("File:" + i, 10);
 	}
-	// fileSystem.list();
+	Debug.print('f', "Listing all files and Directories.");
+	fileSystem.list();
+	Debug.println('f', "Removing file: File:1");
+	fileSystem.remove("File:" + 1);
+	Debug.print('f', "Listing all files and Directories.");
+	fileSystem.list();
+	Debug.println('f', "Removing directory: /1");
+	fileSystem.removeDirectory("/1");
+	Debug.print('f', "Listing all files and Directories.");
+	fileSystem.list();
+
+	byte[] arr = new byte[3000];
+	for (int j = 0; j < arr.length; j++) {
+	    arr[j] = 50;
+	}
+
+	String fileName = "File:2";
+	OpenFile openFile = Nachos.fileSystem.open(fileName);
+
+	// write
+	if (openFile != null) {
+	    Debug.println('f', "Writing " + arr.length + " bytes.");
+	    int numBytes = openFile.write(arr, 0, arr.length);
+	    if (numBytes < 10) {
+		Debug.printf('+', "Perf test: unable to write %s\n", fileName);
+		return;
+	    }
+	}
+
+	// read
+	if (openFile != null) {
+	    Debug.println('f', "Reading " + arr.length + " bytes.");
+	    int numBytes = openFile.read(arr, 0, arr.length);
+	    if (numBytes < 10) {
+		Debug.printf('+', "Perf test: unable to write %s\n", fileName);
+		return;
+	    }
+	}
 	fileSystem.checkFileSystemForConsistency();
     }
 

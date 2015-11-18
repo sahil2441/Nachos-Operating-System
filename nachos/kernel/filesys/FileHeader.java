@@ -201,6 +201,7 @@ class FileHeader {
 	    for (int i = 2; i < sectorsForIndirectBlock; i++) {
 		singleIndirectBlock[i] = freeMap.find();
 	    }
+
 	    return true;
 	}
 	// when we need both indirect blocks

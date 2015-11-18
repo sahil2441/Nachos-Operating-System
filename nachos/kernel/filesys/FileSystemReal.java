@@ -292,7 +292,6 @@ class FileSystemReal extends FileSystem {
 		    success = true;
 		    // everything worked, flush all changes back to disk
 		    hdr.writeBack(sector);
-		    // TODO: check this
 		    directory.writeBack(directoryFile);
 		    freeMap.writeBack(freeMapFile);
 		}
@@ -612,7 +611,8 @@ class FileSystemReal extends FileSystem {
 	    FileHeader fileHdr = new FileHeader(this);
 	    fileHdr.fetchFrom(fileHdrSector);
 
-	    if (fileHdr != null && !fileName.contains("/")) {
+	    if (fileHdr != null && fileName != null
+		    && !fileName.contains("/")) {
 		// check if all data sectors for this file are marked occupied
 		for (int j = 0; j < fileHdr.getDataSectors().length; j++) {
 		    int sector = fileHdr.getDataSectors()[j];
@@ -683,7 +683,8 @@ class FileSystemReal extends FileSystem {
 	    fileHdr.fetchFrom(fileHdrSector);
 	    String fileName = directory.getTable()[i].getName(); // file name
 
-	    if (fileHdr != null && !fileName.contains("/")) {
+	    if (fileHdr != null && fileName != null
+		    && !fileName.contains("/")) {
 
 		// iterate all three -- data sector, single block, double block
 		for (int j = 0; j < fileHdr.getDataSectors().length; j++) {
@@ -729,7 +730,8 @@ class FileSystemReal extends FileSystem {
 	    FileHeader fileHdr = new FileHeader(this);
 	    fileHdr.fetchFrom(fileHdrSector);
 
-	    if (fileHdr != null && !fileName.contains("/")) {
+	    if (fileHdr != null && fileName != null
+		    && !fileName.contains("/")) {
 
 		// update all data sectors for the file.
 		for (int j = 0; j < fileHdr.getDataSectors().length; j++) {
