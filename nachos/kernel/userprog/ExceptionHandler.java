@@ -188,6 +188,14 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		directoryName = obtainExecutableFileName(startIndex);
 		Syscall.removeDirectory(directoryName);
 		break;
+
+	    // Mmap
+	    case Syscall.SC_Mmap:
+		Debug.println('+', "Syscall is : Syscall.SC_Mmap");
+
+		// Mmap
+	    case Syscall.SC_Munmap:
+		Debug.println('+', "Syscall is : Syscall.SC_Munmap");
 	    }
 
 	    // Update the program counter to point to the next instruction

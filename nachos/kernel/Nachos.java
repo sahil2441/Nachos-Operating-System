@@ -100,7 +100,7 @@ public class Nachos implements Runnable {
 	    fileSystem = FileSystem.init(diskDriver);
 
 	// testing
-	testFileSystem();
+	// testFileSystem();
 
 	// Do per-CPU initialization: Before we can run user programs,
 	// we need to set an exception handler on each CPU to handle

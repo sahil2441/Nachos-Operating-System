@@ -81,6 +81,12 @@ public class Syscall {
     /** Integer code identifying the "Remove Directory" system call. */
     public static final byte SC_Rmdir = 15;
 
+    /** Integer code identifying the "Mmap" system call. */
+    public static final byte SC_Mmap = 16;
+
+    /** Integer code identifying the "Munmap" system call. */
+    public static final byte SC_Munmap = 17;
+
     /**
      * Global variable for Process ID
      */

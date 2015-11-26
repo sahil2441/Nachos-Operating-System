@@ -34,6 +34,9 @@
 #define SC_Print	13
 #define SC_Mkdir	14
 #define SC_Rmdir	15
+#define SC_Mmap		16
+#define SC_Munmap	17
+
 
 #ifndef IN_ASM
 
@@ -152,6 +155,18 @@ void Mkdir(char* name);
  * Creates a directory with the specified string as name.
  */
 void Rmdir(char* name);		
+
+/* 
+ * The Mmap system call takes as arguments a string name and an integer pointer sizep.
+ */
+void* Mmap(char *name, int *sizep);
+
+/* 
+ * The Munmap call takes as its argument an address that was returned by a 
+ * previous call to Mmap, and it should cause the mapping of the corresponding 
+ * region of address space to be invalidated and deleted.
+ */
+int Munmap(void *addr);
 
 #endif /* IN_ASM */
 

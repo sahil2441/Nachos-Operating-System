@@ -93,10 +93,25 @@ Rmdir:
 	syscall
 	j	$31
 	.end Rmdir
+	
+	.globl Mmap
+	.ent	Mmap	
+Mmap:
+	addiu $2,$0,SC_Mmap
+	syscall
+	j	$31
+	.end Mmap
+
+	.globl Munmap
+	.ent	Munmap	
+Munmap:
+	addiu $2,$0,SC_Munmap
+	syscall
+	j	$31
+	.end Munmap
 
 	.globl Print
 	.ent	Print
-
 Print:
 	addiu $2,$0,SC_Print
 	syscall
@@ -105,7 +120,6 @@ Print:
 
 	.globl Join
 	.ent	Join
-
 Join:
 	addiu $2,$0,SC_Join
 	syscall
