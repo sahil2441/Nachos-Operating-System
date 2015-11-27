@@ -108,4 +108,14 @@ class FileSystemStub extends FileSystem {
     public void checkFileSystemForConsistency() {
     }
 
+    @Override
+    public boolean checkIfFileExists(String filename) {
+	return false;
+    }
+
+    @Override
+    public int getFileLength(String fileName) {
+	return 0;
+    }
+
 }

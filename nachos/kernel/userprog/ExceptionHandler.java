@@ -189,13 +189,29 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		Syscall.removeDirectory(directoryName);
 		break;
 
-	    // Mmap
 	    case Syscall.SC_Mmap:
 		Debug.println('+', "Syscall is : Syscall.SC_Mmap");
+		startIndex = CPU.readRegister(4);
+		String fileName = obtainExecutableFileName(startIndex);
 
-		// Mmap
+		int fileSize = CPU.readRegister(5);
+		int result = Syscall.mmap(fileName, fileSize);
+
+		// Writing the address of the new created block into register 2
+		// which will be used by syscall Munmap
+		CPU.writeRegister(2, result);
+		break;
+
 	    case Syscall.SC_Munmap:
 		Debug.println('+', "Syscall is : Syscall.SC_Munmap");
+
+		// get the argument passed to Mummap at register 4
+		int address = CPU.readRegister(4);
+
+		// get size pointer at register 5
+		int size = CPU.readRegister(5);
+		Syscall.Munmap(address);
+		break;
 	    }
 
 	    // Update the program counter to point to the next instruction
@@ -215,6 +231,11 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 	// Finish thread here
 	Nachos.scheduler.finishThread();
 
+    }
+
+    private int obtainAddress(int index) {
+	byte buffer[] = Machine.mainMemory;
+	return buffer[index];
     }
 
     private String obtainExecutableFileName(int ptr) {

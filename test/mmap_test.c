@@ -2,7 +2,8 @@
 
 int main()
 {
-	char* name="root";
-	int* size=10;
-	Mmap(name,size);
+	char* name="sahil";
+	int* size;
+	int* address=Mmap(name,size);
+	Munmap(address);
 }

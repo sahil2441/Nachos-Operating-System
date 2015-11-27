@@ -802,4 +802,26 @@ class FileSystemReal extends FileSystem {
     public OpenFile getFreeMapFile() {
 	return freeMapFile;
     }
+
+    @Override
+    public boolean checkIfFileExists(String filename) {
+	Directory directory;
+	directory = new Directory(NumDirEntries, this);
+	directory.fetchFrom(directoryFile);
+	return directory.find(filename) == -1 ? false : true;
+    }
+
+    @Override
+    public int getFileLength(String fileName) {
+	Directory directory;
+	directory = new Directory(NumDirEntries, this);
+	directory.fetchFrom(directoryFile);
+	int fileHdrSector = directory.find(fileName);
+	if (fileHdrSector == -1)
+	    return -1;
+
+	FileHeader fileHdr = new FileHeader(this);
+	fileHdr.fetchFrom(fileHdrSector);
+	return fileHdr.fileLength();
+    }
 }

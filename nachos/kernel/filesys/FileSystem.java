@@ -162,4 +162,9 @@ public abstract class FileSystem {
 	buffer[pos + 3] = (byte) (val & 0xff);
     }
 
+    // Added for Assignment 5
+    public abstract boolean checkIfFileExists(String fileName);
+
+    public abstract int getFileLength(String fileName);
+
 }

@@ -30,6 +30,8 @@ import nachos.machine.Simulation;
  */
 public class Syscall {
 
+    public OpenFile file;
+
     // System call codes -- used by the stubs to tell the kernel
     // which system call is being asked for.
 
@@ -513,5 +515,83 @@ public class Syscall {
 			    + directoryName);
 	}
 	Nachos.fileSystem.list();
+    }
+
+    /**
+     * The Mmap system call takes as arguments a string name and an integer
+     * pointer sizep. If name names an existing file, then the address space of
+     * the calling process is extended at the high end (above the stack) by a
+     * number of pages N such that N times Machine.PageSize is at least as great
+     * as the length of the specified file. The page table entries that map the
+     * newly added portion of the address space should be set initially to
+     * "invalid", and no physical memory pages should initially be allocated for
+     * these entries. In addition, the file should be opened and a reference to
+     * the OpenFile object left associated with the process. A successful call
+     * to Mmap should return the address of the start of the newly added region
+     * of address space. In addition, the variable pointed to by sizep is
+     * updated with the size of the newly allocated region of address space. An
+     * unsuccessful call to Mmap should return 0 and store no value at sizep.
+     * 
+     * After a successful call to Mmap, when the process attempts to access the
+     * newly added region of address space, a page fault should occur, and the
+     * page fault handler should handle the fault by allocating a new physical
+     * page, reading in the corresponding data from the OpenFile, updating the
+     * page table with a new virtual-to-physical mapping, and returning to user
+     * mode to retry the instruction that caused the fault. The effect should be
+     * as if the contents of the memory-mapped file actually appeared in the
+     * process' address space in the newly allocated region. It is permissible
+     * for a process to make several calls to Mmap. In this case, each
+     * successive call should make an additional extension to the address space,
+     * with each new extension starting just above the preceding one.
+     * 
+     * @param fileName
+     * @param fileSize
+     */
+    // TODO
+    public static int mmap(String fileName, int fileSize) {
+	if (Nachos.fileSystem.checkIfFileExists(fileName)) {
+	    AddrSpace space = ((UserThread) NachosThread.currentThread()).space;
+	    // extend address space by n
+	    int fileLength = Nachos.fileSystem.getFileLength(fileName);
+	    int n = (int) Math.ceil(fileLength / Machine.PageSize);
+	    if (n < 1)
+		return -1;
+
+	    // open the file
+	    // TODO: Leave the reference
+	    OpenFile file = Nachos.fileSystem.open(fileName);
+
+	    return space.extendAddressSpace(n);
+	}
+	return 0;
+    }
+
+    /**
+     * The Munmap call takes as its argument an address that was returned by a
+     * previous call to Mmap, and it should cause the mapping of the
+     * corresponding region of address space to be invalidated and deleted. Any
+     * memory pages associated with this region should be returned to the free
+     * memory pool.
+     * 
+     * A process is permitted to write into a memory-mapped region of its
+     * address space. In this case, the page that was written should be marked
+     * as "dirty" and arrangements should be made for it to be written back to
+     * the disk at the time the file is unmapped. Pages that have not been
+     * written are "clean" and should not be written back to the disk. To track
+     * which pages are clean and which are dirty, initially set all pages in
+     * memory-mapped regions to invalid and read-only. The first time a page
+     * fault occurs, assume it is a read access and set the corresponding page
+     * table entry to valid and read-only. If a page fault occurs on a page
+     * whose page table entry is marked valid and read-only, you will know that
+     * it is because the process is performing a write access. In that case set
+     * the page table entry to read/write and flag the page as dirty.
+     * 
+     * @param address
+     */
+    public static void Munmap(int address) {
+	// TODO Auto-generated method stub
+	AddrSpace space = ((UserThread) NachosThread.currentThread()).space;
+	space.executeMunmap(address);
+
     }
 }

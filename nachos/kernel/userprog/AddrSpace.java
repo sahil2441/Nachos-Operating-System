@@ -289,4 +289,45 @@ public class AddrSpace {
 
 	return addrSpace;
     }
+
+    /**
+     * Extends address space by n
+     * 
+     * @param n
+     * @return
+     */
+
+    public int extendAddressSpace(int n) {
+	int oldSize = pageTable.length;
+	TranslationEntry pageTableNew[] = new TranslationEntry[pageTable.length
+		+ n];
+	// copy all entries from page table as it is
+	for (int i = 0; i < pageTable.length; i++) {
+	    pageTableNew[i] = pageTable[i];
+	}
+	this.pageTable = pageTableNew;
+
+	//
+	CPU.writeRegister(5, pageTableNew.length);
+
+	// TODO: return the address of the start of the newly added region
+	// of address space
+	return oldSize;
+    }
+
+    /**
+     * Invalidate and delete the address or Remove the mapping associated with
+     * the address.
+     * 
+     * @param address
+     */
+    public void executeMunmap(int address) {
+	TranslationEntry translationEntry = pageTable[address];
+	if (translationEntry != null) {
+	    translationEntry.valid = false;
+	    translationEntry.dirty = true;
+	    int physicalPage = translationEntry.physicalPage;
+	}
+
+    }
 }
