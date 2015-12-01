@@ -1,12 +1,15 @@
 ##################################################################
+##################################################################
 						Sahil Jain
 						110281300
 						sahjain@cs.stonybrook.edu
+##################################################################
 ##################################################################
 
 MAJOR CHANGES MADE:
 
 --	void *Mmap(char *name, int *sizep);
+
 	Created a new system call that takes as arguments a string name and an integer pointer sizep.
 	From exception handler when this system call is made, the following method is called:
 	nachos.kernel.userprog.Syscall.mmap(String, int)
@@ -30,16 +33,26 @@ MAJOR CHANGES MADE:
 	is executed with multiple file names in sequence.
 
 
-###############################
+##################################################################
+
 --	Handling Pagefault Exception
 	From exception handler the page fault occurs when:
 	which == MachineException.PageFaultException
 	
-	Then this method is called:
+	and the following method is called that takes argument as the virtual address:
+	nachos.kernel.userprog.AddrSpace.handlePageFaultException(int)
 	
-			
-
-###############################
+	This method allocates memory for physical page and sets the valid flag =true.
+	Then it copies the file at the given page into byte array and copies the byte array into the 
+	Machine.mainmemory at the physical address.
+	
+	We also maintin the map
+	nachos.kernel.userprog.AddrSpace.mapOfVirPNStartingIndex
+	
+	that keeps track of the virtual page number and the starting index of the file, from where we started reading
+	data. We use this map in the Munmap syscall.
+	
+##################################################################
 
 --	int Munmap(void *addr);
 	Created a new system call that takes as its argument an address that was returned by a previous call to Mmap.
@@ -49,4 +62,22 @@ MAJOR CHANGES MADE:
 	
 	is called from Exception handler and this method further calls:
 	nachos.kernel.userprog.AddrSpace.executeMunmap(int)
+	
+	This method deallocates the memory from physical memory manager by iterating over the page table array and 
+	checking which pages are dirty. And then copies the pages from main memory into the file.
+	
+	The method:
+	nachos.kernel.userprog.AddrSpace.printBuffer(byte[])
+	
+	can be used to check the contents of the buffer array and has been created for debugging purposes.
+	
+##################################################################
+
+--	Test Cases:
+	 
+	I've created two test cases for testing the system calls. Enter this in the Run configuration:
+	-d -f -x test/mmap_test2
+	
+	and
+	-d -f -x test/mmap_test1
 	

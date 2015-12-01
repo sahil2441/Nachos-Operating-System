@@ -418,7 +418,7 @@ public class AddrSpace {
 		byte[] buffer = new byte[128];
 		System.arraycopy(Machine.mainMemory, physicalPageAddress,
 			buffer, 0, Machine.PageSize);
-		printBuffer(buffer);
+		// printBuffer(buffer);
 		int startingIndex = mapOfVirPNStartingIndex.get(i);
 		openFile.writeAt(buffer, 0, Machine.PageSize, startingIndex);
 	    }
@@ -530,6 +530,7 @@ public class AddrSpace {
     }
 
     /**
+     * The method handles page fault exception.
      * 
      * @param virtualAddress
      */
