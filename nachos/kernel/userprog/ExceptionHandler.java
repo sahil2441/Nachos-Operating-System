@@ -223,6 +223,7 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 	}
 
 	else if (which == MachineException.PageFaultException) {
+	    Debug.println('+', "which=2 and PageFaultException occured.");
 
 	    // get virtual address
 	    virtualAddress = CPU.readRegister(MIPS.BadVAddrReg);
@@ -241,11 +242,6 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 	// Finish thread here
 	Nachos.scheduler.finishThread();
 
-    }
-
-    private int obtainAddress(int index) {
-	byte buffer[] = Machine.mainMemory;
-	return buffer[index];
     }
 
     private String obtainExecutableFileName(int ptr) {

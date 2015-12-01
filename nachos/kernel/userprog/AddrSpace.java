@@ -399,7 +399,7 @@ public class AddrSpace {
 	// get virtual page number
 	int virtualPageNumber = ((virtualAddress >> 7) & 0x1ffffff);
 
-	// set from this virtual page number till end of page table
+	// From this virtual page number till end of page table, free the memory
 
 	int physicalMemoryIndex;
 	for (int i = virtualPageNumber; i < pageTable.length; i++) {
@@ -418,17 +418,31 @@ public class AddrSpace {
 		byte[] buffer = new byte[128];
 		System.arraycopy(Machine.mainMemory, physicalPageAddress,
 			buffer, 0, Machine.PageSize);
+		printBuffer(buffer);
 		int startingIndex = mapOfVirPNStartingIndex.get(i);
 		openFile.writeAt(buffer, 0, Machine.PageSize, startingIndex);
 	    }
 	}
 
-	// shrink the page table array
+	// shrink the page table array to a new pagetable array with
+	// size=virtualPageNumber
 	TranslationEntry[] pageTableNew = new TranslationEntry[virtualPageNumber];
 	for (int i = 0; i < pageTableNew.length; i++) {
 	    pageTableNew[i] = pageTable[i];
 	}
 	this.pageTable = pageTableNew;
+    }
+
+    /**
+     * Prints the contents of buffer to be printed
+     * 
+     * @param buffer
+     */
+    private void printBuffer(byte[] buffer) {
+	Debug.println('f', "Printing byte buffer");
+	for (int i = 0; i < buffer.length; i++) {
+	    Debug.println('f', String.valueOf((char) buffer[i]));
+	}
     }
 
     /**
@@ -521,10 +535,10 @@ public class AddrSpace {
      */
 
     public void handlePageFaultException(int virtualAddress) {
-	// TODO Auto-generated method stub
 	int virtualPageNumber = ((virtualAddress >> 7) & 0x1ffffff);
 	int physicalPageNumber = PhysicalMemoryManager.getInstance().getIndex();
 
+	// allocate memory for physical page and set valid =true
 	pageTable[virtualPageNumber].physicalPage = physicalPageNumber;
 	pageTable[virtualPageNumber].valid = true;
 
@@ -532,8 +546,8 @@ public class AddrSpace {
 
 	// copy the file at one page into byte array
 	byte[] into = new byte[Machine.PageSize];
-	int bytesRead = file.read(into, 0, Machine.PageSize);
 	int startingIndex = file.getSeekPosition();
+	file.read(into, 0, Machine.PageSize);
 	mapOfVirPNStartingIndex.put(virtualPageNumber, startingIndex);
 
 	int offset = (virtualAddress & 0x7f);
