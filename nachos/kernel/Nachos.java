@@ -148,7 +148,7 @@ public class Nachos implements Runnable {
     }
 
     private void executeOpertions() {
-	fileSystem.create("sahil", 10);
+	fileSystem.create("sahil", 1000);
     }
 
     /**
