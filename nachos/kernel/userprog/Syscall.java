@@ -547,7 +547,6 @@ public class Syscall {
      * @param fileName
      * @param sizePointer
      */
-    // TODO
     public static int mmap(String fileName, int sizePointer) {
 
 	AddrSpace space = ((UserThread) NachosThread.currentThread()).space;

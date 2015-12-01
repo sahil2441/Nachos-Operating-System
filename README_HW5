@@ -5,3 +5,48 @@
 ##################################################################
 
 MAJOR CHANGES MADE:
+
+--	void *Mmap(char *name, int *sizep);
+	Created a new system call that takes as arguments a string name and an integer pointer sizep.
+	From exception handler when this system call is made, the following method is called:
+	nachos.kernel.userprog.Syscall.mmap(String, int)
+	
+	which in turn calls the method
+	nachos.kernel.userprog.AddrSpace.executeMmap(String, int)
+	
+	This method checks whether a file with the given file name exists. If it doesn't the method return 0.
+	If it does it calls the method 
+	nachos.kernel.userprog.AddrSpace.extendAddressSpace(int)
+	
+	to extend the page table array in address space by the required size.
+	
+	Then it copies the size of the size of the file in a byte buffer and copies that into the 
+	Machine.mainmemory.
+	
+	And finally, before returning that virtual address, it updates the map 
+	nachos.kernel.userprog.AddrSpace.openFileMap
+	
+	that keeps track of virtual address and OpenFile. This is done to handle cases in which Mmap syscall
+	is executed with multiple file names in sequence.
+
+
+###############################
+--	Handling Pagefault Exception
+	From exception handler the page fault occurs when:
+	which == MachineException.PageFaultException
+	
+	Then this method is called:
+	
+			
+
+###############################
+
+--	int Munmap(void *addr);
+	Created a new system call that takes as its argument an address that was returned by a previous call to Mmap.
+	
+	The method in syscall:
+	nachos.kernel.userprog.Syscall.Munmap(int)
+	
+	is called from Exception handler and this method further calls:
+	nachos.kernel.userprog.AddrSpace.executeMunmap(int)
+	
