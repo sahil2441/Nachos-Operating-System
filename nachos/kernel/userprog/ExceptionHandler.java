@@ -207,10 +207,8 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 
 		// get the argument passed to Mummap at register 4
 		int address = CPU.readRegister(4);
-
-		// get size pointer at register 5
-		int size = CPU.readRegister(5);
-		Syscall.Munmap(address);
+		int status = Syscall.Munmap(address);
+		CPU.writeRegister(2, status);
 		break;
 	    }
 
@@ -225,6 +223,8 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 	}
 
 	else if (which == MachineException.PageFaultException) {
+
+	    // get virtual address
 	    virtualAddress = CPU.readRegister(MIPS.BadVAddrReg);
 	    AddrSpace addrssSpace = ((UserThread) NachosThread
 		    .currentThread()).space;

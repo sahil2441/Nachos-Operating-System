@@ -79,6 +79,9 @@ public class AddrSpace {
     /** Map that keeps record of address pointers and Open file for Mmap. */
     public Map<Integer, OpenFile> openFileMap;
 
+    /** Map that keeps record of virtual address pointers and starting index. */
+    public Map<Integer, Integer> mapOfVirPNStartingIndex;
+
     /** Lock to hold the process. */
     public Lock lock;
 
@@ -95,6 +98,8 @@ public class AddrSpace {
 	// initialize the openFileMap
 	openFileMap = new HashMap<>();
 	lock = new Lock("Mmap Lock");
+
+	mapOfVirPNStartingIndex = new HashMap();
     }
 
     /**
@@ -388,13 +393,42 @@ public class AddrSpace {
      * 
      * @param address
      */
-    public void executeMunmap(int address) {
-	TranslationEntry translationEntry = pageTable[address];
-	if (translationEntry != null) {
-	    translationEntry.valid = false;
-	    translationEntry.dirty = true;
-	    int physicalPage = translationEntry.physicalPage;
+    public void executeMunmap(int virtualAddress) {
+	OpenFile openFile = this.openFileMap.get(virtualAddress);
+
+	// get virtual page number
+	int virtualPageNumber = ((virtualAddress >> 7) & 0x1ffffff);
+
+	// set from this virtual page number till end of page table
+
+	int physicalMemoryIndex;
+	for (int i = virtualPageNumber; i < pageTable.length; i++) {
+	    physicalMemoryIndex = pageTable[i].physicalPage;
+	    PhysicalMemoryManager.getInstance().freeIndex(physicalMemoryIndex);
+	    pageTable[i].valid = false;
+
+	    if (pageTable[i].dirty) {
+		// copy byte buffer from main memory into open file at position
+		// virtualPageNumber*128
+
+		// get virtual page number and offset from virtual address
+		int offset = (virtualAddress & 0x7f);
+		int physicalPageNumber = pageTable[i].physicalPage;
+		int physicalPageAddress = ((physicalPageNumber << 7) | offset);
+		byte[] buffer = new byte[128];
+		System.arraycopy(Machine.mainMemory, physicalPageAddress,
+			buffer, 0, Machine.PageSize);
+		int startingIndex = mapOfVirPNStartingIndex.get(i);
+		openFile.writeAt(buffer, 0, Machine.PageSize, startingIndex);
+	    }
 	}
+
+	// shrink the page table array
+	TranslationEntry[] pageTableNew = new TranslationEntry[virtualPageNumber];
+	for (int i = 0; i < pageTableNew.length; i++) {
+	    pageTableNew[i] = pageTable[i];
+	}
+	this.pageTable = pageTableNew;
     }
 
     /**
@@ -498,7 +532,9 @@ public class AddrSpace {
 
 	// copy the file at one page into byte array
 	byte[] into = new byte[Machine.PageSize];
-	file.read(into, 0, Machine.PageSize);
+	int bytesRead = file.read(into, 0, Machine.PageSize);
+	int startingIndex = file.getSeekPosition();
+	mapOfVirPNStartingIndex.put(virtualPageNumber, startingIndex);
 
 	int offset = (virtualAddress & 0x7f);
 	int physicalPageAddress = ((physicalPageNumber << 7) | offset);

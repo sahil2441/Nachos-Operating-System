@@ -575,10 +575,9 @@ public class Syscall {
      * 
      * @param address
      */
-    public static void Munmap(int address) {
-	// TODO Auto-generated method stub
+    public static int Munmap(int virtualAddress) {
 	AddrSpace space = ((UserThread) NachosThread.currentThread()).space;
-	space.executeMunmap(address);
-
+	space.executeMunmap(virtualAddress);
+	return 1;
     }
 }

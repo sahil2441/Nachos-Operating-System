@@ -4,9 +4,8 @@ int main()
 {
 	char* name="sahil";
 	int size=0;
-	int* address=Mmap(name,&size);
+	int* address1=Mmap(name,&size);
 	
-	address[0]='k';
-	
-//	Munmap(address);
+	address1[0]='k';		
+	Munmap(address1);
 }

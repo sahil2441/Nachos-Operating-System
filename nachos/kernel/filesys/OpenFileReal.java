@@ -312,4 +312,9 @@ class OpenFileReal implements OpenFile {
 	return (1);
     }
 
+    @Override
+    public int getSeekPosition() {
+	return seekPosition;
+    }
+
 }
