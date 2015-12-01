@@ -480,4 +480,31 @@ public class AddrSpace {
 	buffer[1] = buffer[2];
 	buffer[2] = temp;
     }
+
+    /**
+     * 
+     * @param virtualAddress
+     */
+
+    public void handlePageFaultException(int virtualAddress) {
+	// TODO Auto-generated method stub
+	int virtualPageNumber = ((virtualAddress >> 7) & 0x1ffffff);
+	int physicalPageNumber = PhysicalMemoryManager.getInstance().getIndex();
+
+	pageTable[virtualPageNumber].physicalPage = physicalPageNumber;
+	pageTable[virtualPageNumber].valid = true;
+
+	OpenFile file = this.openFileMap.get(virtualAddress);
+
+	// copy the file at one page into byte array
+	byte[] into = new byte[Machine.PageSize];
+	file.read(into, 0, Machine.PageSize);
+
+	int offset = (virtualAddress & 0x7f);
+	int physicalPageAddress = ((physicalPageNumber << 7) | offset);
+
+	// copy byte array into main memory
+	System.arraycopy(into, 0, Machine.mainMemory, physicalPageAddress,
+		Machine.PageSize);
+    }
 }

@@ -225,9 +225,10 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 	}
 
 	else if (which == MachineException.PageFaultException) {
-	    // TODO:
 	    virtualAddress = CPU.readRegister(MIPS.BadVAddrReg);
-	    virtualPageNumber = ((virtualAddress >> 7) & 0x1ffffff);
+	    AddrSpace addrssSpace = ((UserThread) NachosThread
+		    .currentThread()).space;
+	    addrssSpace.handlePageFaultException(virtualAddress);
 
 	    return;
 
