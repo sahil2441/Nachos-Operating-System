@@ -194,8 +194,8 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		startIndex = CPU.readRegister(4);
 		String fileName = obtainExecutableFileName(startIndex);
 
-		int fileSize = CPU.readRegister(5);
-		int result = Syscall.mmap(fileName, fileSize);
+		int sizePointer = CPU.readRegister(5);
+		int result = Syscall.mmap(fileName, sizePointer);
 
 		// Writing the address of the new created block into register 2
 		// which will be used by syscall Munmap
@@ -222,6 +222,15 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 		    CPU.readRegister(MIPS.NextPCReg) + 4);
 
 	    return;
+	}
+
+	else if (which == MachineException.PageFaultException) {
+	    // TODO:
+	    virtualAddress = CPU.readRegister(MIPS.BadVAddrReg);
+	    virtualPageNumber = ((virtualAddress >> 7) & 0x1ffffff);
+
+	    return;
+
 	}
 
 	// System.out.println(

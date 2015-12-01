@@ -100,9 +100,11 @@ public class PhysicalMemoryManager {
     }
 
     public void freeIndex(int index) {
-	Debug.println('+',
-		"Entered method nachos.kernel.userprog.PhysicalMemoryManager.freeIndex(int)"
-			+ ", Freeing memory at index: " + index);
-	physicalMemoryArray[index] = false;
+	if (index != -1) {
+	    Debug.println('+',
+		    "Entered method nachos.kernel.userprog.PhysicalMemoryManager.freeIndex(int)"
+			    + ", Freeing memory at index: " + index);
+	    physicalMemoryArray[index] = false;
+	}
     }
 }

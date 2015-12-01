@@ -3,7 +3,10 @@
 int main()
 {
 	char* name="sahil";
-	int* size;
-	int* address=Mmap(name,size);
-	Munmap(address);
+	int size=0;
+	int* address=Mmap(name,&size);
+	
+	address[0]='k';
+	
+//	Munmap(address);
 }

@@ -545,25 +545,13 @@ public class Syscall {
      * with each new extension starting just above the preceding one.
      * 
      * @param fileName
-     * @param fileSize
+     * @param sizePointer
      */
     // TODO
-    public static int mmap(String fileName, int fileSize) {
-	if (Nachos.fileSystem.checkIfFileExists(fileName)) {
-	    AddrSpace space = ((UserThread) NachosThread.currentThread()).space;
-	    // extend address space by n
-	    int fileLength = Nachos.fileSystem.getFileLength(fileName);
-	    int n = (int) Math.ceil(fileLength / Machine.PageSize);
-	    if (n < 1)
-		return -1;
+    public static int mmap(String fileName, int sizePointer) {
 
-	    // open the file
-	    // TODO: Leave the reference
-	    OpenFile file = Nachos.fileSystem.open(fileName);
-
-	    return space.extendAddressSpace(n);
-	}
-	return 0;
+	AddrSpace space = ((UserThread) NachosThread.currentThread()).space;
+	return space.executeMmap(fileName, sizePointer);
     }
 
     /**
@@ -578,13 +566,12 @@ public class Syscall {
      * as "dirty" and arrangements should be made for it to be written back to
      * the disk at the time the file is unmapped. Pages that have not been
      * written are "clean" and should not be written back to the disk. To track
-     * which pages are clean and which are dirty, initially set all pages in
-     * memory-mapped regions to invalid and read-only. The first time a page
-     * fault occurs, assume it is a read access and set the corresponding page
-     * table entry to valid and read-only. If a page fault occurs on a page
-     * whose page table entry is marked valid and read-only, you will know that
-     * it is because the process is performing a write access. In that case set
-     * the page table entry to read/write and flag the page as dirty.
+     * which pages are clean and which are dirty, clear the dirty bit in the
+     * page table when you initially map the page. The MMU hardware will set the
+     * dirty bit whenever a write access is made to the page. Before eventually
+     * freeing the page, check the dirty bit and if it is set, write the
+     * contents back to the file.
+     * 
      * 
      * @param address
      */

@@ -20,10 +20,14 @@
 package nachos.kernel.userprog;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import nachos.Debug;
+import nachos.kernel.Nachos;
 import nachos.kernel.filesys.OpenFile;
+import nachos.kernel.threads.Lock;
 import nachos.kernel.threads.Semaphore;
 import nachos.machine.CPU;
 import nachos.machine.MIPS;
@@ -72,6 +76,12 @@ public class AddrSpace {
 
     public List<AddrSpace> addrSpaces = new ArrayList<>();
 
+    /** Map that keeps record of address pointers and Open file for Mmap. */
+    public Map<Integer, OpenFile> openFileMap;
+
+    /** Lock to hold the process. */
+    public Lock lock;
+
     /**
      * Create a new address space.
      */
@@ -82,6 +92,9 @@ public class AddrSpace {
 	spaceID = ++PhysicalMemoryManager.spaceID;
 	PhysicalMemoryManager.mapOfAddrSpace.put(spaceID, this);
 
+	// initialize the openFileMap
+	openFileMap = new HashMap<>();
+	lock = new Lock("Mmap Lock");
     }
 
     /**
@@ -269,8 +282,11 @@ public class AddrSpace {
 	for (int i = 0; i < pageTable.length; i++) {
 	    for (int offset = 0; offset < Machine.PageSize; offset++) {
 		if (pageTable[i] != null) {
-		    Machine.mainMemory[pageTable[i].physicalPage
-			    * Machine.PageSize + offset] = (byte) 0;
+		    if ((pageTable[i].physicalPage * Machine.PageSize
+			    + offset) > 0) {
+			Machine.mainMemory[pageTable[i].physicalPage
+				* Machine.PageSize + offset] = (byte) 0;
+		    }
 		}
 
 	    }
@@ -298,6 +314,9 @@ public class AddrSpace {
      */
 
     public int extendAddressSpace(int n) {
+	// acquire lock to prevent others accessing it.
+	lock.acquire();
+
 	int oldSize = pageTable.length;
 	TranslationEntry pageTableNew[] = new TranslationEntry[pageTable.length
 		+ n];
@@ -305,19 +324,67 @@ public class AddrSpace {
 	for (int i = 0; i < pageTable.length; i++) {
 	    pageTableNew[i] = pageTable[i];
 	}
+
+	// initialize new objects
+	for (int i = pageTable.length; i < pageTableNew.length; i++) {
+	    pageTableNew[i] = new TranslationEntry();
+	    // valid should be false by default
+	    pageTableNew[i].valid = false;
+	    pageTableNew[i].physicalPage = -1;
+	}
 	this.pageTable = pageTableNew;
 
-	//
-	CPU.writeRegister(5, pageTableNew.length);
+	// update the page table
+	CPU.setPageTable(pageTableNew);
 
-	// TODO: return the address of the start of the newly added region
-	// of address space
-	return oldSize;
+	// release lock now
+	lock.release();
+	return oldSize * 128;
     }
 
     /**
-     * Invalidate and delete the address or Remove the mapping associated with
-     * the address.
+     * The Munmap call takes as its argument an address that was returned by a
+     * previous call to Mmap, and it should cause the mapping of the
+     * corresponding region of address space to be invalidated and deleted. Any
+     * memory pages associated with this region should be returned to the free
+     * memory pool.
+     * 
+     * A process is permitted to write into a memory-mapped region of its
+     * address space. In this case, the page that was written should be marked
+     * as "dirty" and arrangements should be made for it to be written back to
+     * the disk at the time the file is unmapped. Pages that have not been
+     * written are "clean" and should not be written back to the disk. To track
+     * which pages are clean and which are dirty, clear the dirty bit in the
+     * page table when you initially map the page. The MMU hardware will set the
+     * dirty bit whenever a write access is made to the page. Before eventually
+     * freeing the page, check the dirty bit and if it is set, write the
+     * contents back to the file.
+     * 
+     * To complete this assignment, you will need to implement a page fault
+     * handler, which gets dispatched out of the exception handler when a page
+     * fault exception occurs. The page fault handler is responsible for
+     * identifying the virtual page number on which the fault occurred,
+     * determining whether the page in question is currently resident or not,
+     * paging in data from the underlying file if the page is not resident,
+     * modifying the page table for the faulting process, and and finally
+     * returning to user mode to restart the faulting instruction. The page
+     * fault handler is also responsible for identifying write accesses and
+     * flagging dirty pages, as described above. Do not worry about page
+     * replacement for this assignment; just return allocated pages to the free
+     * memory pool when a process terminates or when it unmaps the mapped region
+     * using Munmap().
+     * 
+     * You should construct some test applications that demonstrate the
+     * functioning of your Mmap facility. You can do initial testing and
+     * debugging using the stub filesystem, but then you should test your
+     * implementation using the real filesystem. To set up to use the real
+     * filesystem, you need to set the flags DISK and FILESYSTEM to true and
+     * flag FILESYS_STUB to false in the Nachos class. By default, a file DISK
+     * will be created to contain the disk image when the disk driver is
+     * initialized. The first time you use the disk image, you need to format it
+     * by passing the "-f" argument to NACHOS. Then, you need to write some
+     * files to the newly formatted filesystem. For that, you can use the "-cp"
+     * flag to NACHOS, which is handled by the FileSystemTest class.
      * 
      * @param address
      */
@@ -328,6 +395,89 @@ public class AddrSpace {
 	    translationEntry.dirty = true;
 	    int physicalPage = translationEntry.physicalPage;
 	}
+    }
 
+    /**
+     * The Mmap system call takes as arguments a string name and an integer
+     * pointer sizep. If name names an existing file, then the address space of
+     * the calling process is extended at the high end (above the stack) by a
+     * number of pages N such that N times Machine.PageSize is at least as great
+     * as the length of the specified file. The page table entries that map the
+     * newly added portion of the address space should be set initially to
+     * "invalid", and no physical memory pages should initially be allocated for
+     * these entries. In addition, the file should be opened and a reference to
+     * the OpenFile object left associated with the process. A successful call
+     * to Mmap should return the address of the start of the newly added region
+     * of address space. In addition, the variable pointed to by sizep is
+     * updated with the size of the newly allocated region of address space. An
+     * unsuccessful call to Mmap should return 0 and store no value at sizep.
+     * 
+     * After a successful call to Mmap, when the process attempts to access the
+     * newly added region of address space, a page fault should occur, and the
+     * page fault handler should handle the fault by allocating a new physical
+     * page, reading in the corresponding data from the OpenFile, updating the
+     * page table with a new virtual-to-physical mapping, and returning to user
+     * mode to retry the instruction that caused the fault. The effect should be
+     * as if the contents of the memory-mapped file actually appeared in the
+     * process' address space in the newly allocated region. It is permissible
+     * for a process to make several calls to Mmap. In this case, each
+     * successive call should make an additional extension to the address space,
+     * with each new extension starting just above the preceding one.
+     * 
+     * @param fileName
+     * @param sizePointer
+     * @param fileSize
+     */
+    public int executeMmap(String fileName, int sizePointer) {
+	int startingAddress = 0;
+	OpenFile openFile = Nachos.fileSystem.open(fileName);
+	if (openFile != null) {
+
+	    // extend address space by n; n is the number of extra pages
+	    long n = roundToPage(openFile.length()) / Machine.PageSize;
+	    if (n < 1) {
+		return 0;
+	    }
+	    startingAddress = extendAddressSpace((int) n);
+
+	    // update sizePointer
+	    byte[] buffer = new byte[4];
+	    Nachos.fileSystem.intToBytes((int) openFile.length(), buffer, 0);
+
+	    // reverse the buffer array
+	    reverseBufferArray(buffer);
+
+	    // write size pointer to main memory
+	    writeSizePointerToMainMemory(sizePointer, buffer);
+
+	    // update the map
+	    openFileMap.put(startingAddress, openFile);
+	}
+	return startingAddress;
+    }
+
+    private void writeSizePointerToMainMemory(int virtualAddress,
+	    byte[] buffer) {
+	int virtualPageNumber = ((virtualAddress >> 7) & 0x1ffffff);
+	// get virtual page number and offset from virtual address
+	int offset = (virtualAddress & 0x7f);
+	int physicalPageNumber = pageTable[virtualPageNumber].physicalPage;
+	int physicalPageAddress = ((physicalPageNumber << 7) | offset);
+
+	// copy bytes into main Memory
+	for (int i = physicalPageAddress; i < physicalPageAddress + 4; i++) {
+	    Machine.mainMemory[physicalPageAddress] = buffer[i
+		    - physicalPageAddress];
+	}
+    }
+
+    private void reverseBufferArray(byte[] buffer) {
+	byte temp = buffer[0];
+	buffer[0] = buffer[3];
+	buffer[3] = temp;
+
+	temp = buffer[1];
+	buffer[1] = buffer[2];
+	buffer[2] = temp;
     }
 }
