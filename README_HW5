@@ -81,3 +81,8 @@ MAJOR CHANGES MADE:
 	and
 	-d -f -x test/mmap_test1
 	
+	The method:
+	nachos.kernel.Nachos.executeOpertions()
+	
+	creates a file in the file system with the name as specified in the user programs.
+	

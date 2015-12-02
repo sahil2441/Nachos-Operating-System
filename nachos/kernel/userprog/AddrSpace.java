@@ -419,6 +419,8 @@ public class AddrSpace {
 		System.arraycopy(Machine.mainMemory, physicalPageAddress,
 			buffer, 0, Machine.PageSize);
 		// printBuffer(buffer);
+		// TODO: Consider case when mmap returns 0 because file was not
+		// found
 		int startingIndex = mapOfVirPNStartingIndex.get(i);
 		openFile.writeAt(buffer, 0, Machine.PageSize, startingIndex);
 	    }
