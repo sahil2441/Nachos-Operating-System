@@ -2,7 +2,7 @@
 
 int main()
 {
-	char* name="sahil1";
+	char* name="sahil";
 	int size=0;
 	int* address1=Mmap(name,&size);
 	

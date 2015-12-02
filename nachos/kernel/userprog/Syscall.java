@@ -575,6 +575,8 @@ public class Syscall {
      * @param address
      */
     public static int Munmap(int virtualAddress) {
+	if (virtualAddress == 0)
+	    return 0;
 	AddrSpace space = ((UserThread) NachosThread.currentThread()).space;
 	space.executeMunmap(virtualAddress);
 	return 1;

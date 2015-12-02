@@ -199,6 +199,7 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 
 		// Writing the address of the new created block into register 2
 		// which will be used by syscall Munmap
+		Debug.println('f', "Mmap passing address: " + result);
 		CPU.writeRegister(2, result);
 		break;
 
@@ -207,6 +208,7 @@ public class ExceptionHandler implements nachos.machine.ExceptionHandler {
 
 		// get the argument passed to Mummap at register 4
 		int address = CPU.readRegister(4);
+		Debug.println('f', "Address passed to Munmap: " + address);
 		int status = Syscall.Munmap(address);
 		CPU.writeRegister(2, status);
 		break;
