@@ -47,7 +47,7 @@ MAJOR CHANGES MADE:
 	Then it copies the file at the given page into byte array and copies the byte array into the 
 	Machine.mainmemory at the physical address.
 	
-	We also maintin the map
+	We also maintain the map
 	nachos.kernel.userprog.AddrSpace.mapOfVirPNStartingIndex
 	
 	that keeps track of the virtual page number and the starting index of the file, from where we started reading
@@ -72,6 +72,8 @@ MAJOR CHANGES MADE:
 	nachos.kernel.userprog.AddrSpace.printBuffer(byte[])
 	
 	can be used to check the contents of the buffer array and has been created for debugging purposes.
+	
+	A successful call to Munmap returns 1, else returns 0.
 	
 ##################################################################
 
