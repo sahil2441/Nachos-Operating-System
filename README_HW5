@@ -79,11 +79,17 @@ MAJOR CHANGES MADE:
 
 --	Test Cases:
 	 
-	I've created two test cases for testing the system calls. Enter this in the Run configuration:
-	-d -f -x test/mmap_test2
+	I've created a few test cases for testing the system calls:
+	mmap_test1,mmap_test2, and mmap_test3
 	
-	and
-	-d -f -x test/mmap_test1
+	mmap_test1 is a simple test case to evaluate the the basic functionality of the system calls.
+	mmap_test2 accesses the returned address several times to cause multiple page fault.
+	In mmap_test3 Mmap syscall return 0 and therefore Munmap call doesn'e execute successfully and returns 0. 
+	
+	To run these test cases, enter this in the Run configuration:
+	-d -f -x test/mmap_test1	
+	-d -f -x test/mmap_test2
+	-d -f -x test/mmap_test3
 	
 	The method:
 	nachos.kernel.Nachos.executeOpertions()
