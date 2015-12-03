@@ -7,7 +7,8 @@
 ##################################################################
 
 MAJOR CHANGES MADE:
-
+	
+	Mmap System Call
 --	void *Mmap(char *name, int *sizep);
 
 	Created a new system call that takes as arguments a string name and an integer pointer sizep.
@@ -54,6 +55,7 @@ MAJOR CHANGES MADE:
 	
 ##################################################################
 
+	Munmap System Call:
 --	int Munmap(void *addr);
 	Created a new system call that takes as its argument an address that was returned by a previous call to Mmap.
 	
