@@ -1,0 +1,12 @@
+Nachos Operating System was developed by Thomas Anderson at University of Washington. Its first release came in 1992.
+This is my implementation of Nachos, with the following modifications:
+
+1.Implemented various system calls such as sleep(), exec(), join(), fork(), read(), write() and exit().
+2.Implemented semaphores, thread scheduling and process management routines, 
+  extending functionality of Nachos Operating System to handle Multithreading and User Programming.
+3.Extended Nachos OS to implement Round Robin Scheduling, Multi Feedback Scheduling.
+4.Built a Console Driver for Nachos.
+5.Extended the functionality of the Nachos File system, implementing File Extension, Directory Structure,  Single and 
+  Double Indirect Blocks.
+6.Extended Nachos to support demand paged, memory mapped files by adding two new system calls- Mmap() and
+  Munmap().
